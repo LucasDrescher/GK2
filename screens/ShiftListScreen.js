@@ -71,22 +71,6 @@ export default function ShiftListScreen({ route }) {
   return (
     <View style={globalStyles.container}>
       <Text style={globalStyles.title}>Dine vagter</Text>
-      {shifts.length === 0 ? (
-        <Text>Ingen vagter fundet</Text>
-      ) : (
-        <FlatList
-          data={shifts}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={{ marginBottom: 15 }}>
-              <Text>Dato: {item.date}</Text>
-              <Text>Tid: {item.time}</Text>
-              <Text>Rolle: {item.role}</Text>
-              <Text>Sted: {item.location}</Text>
-            </View>
-          )}
-        />
-      )}
     </View>
   );
 }

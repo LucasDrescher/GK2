@@ -20,23 +20,23 @@ export default function ContractScreen({ route }) {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !companyCode) return;
 
-    const empRef = ref(rtdb, "employees/" + userId);
+    const empRef = ref(rtdb, `companies/${companyCode}/employees/${userId}`);
     get(empRef).then((snapshot) => {
       if (snapshot.exists()) {
         const emp = snapshot.val();
         setEmployee(emp);
         if (emp.signature) {
-          setSignature(emp.signature); 
+          setSignature(emp.signature);
         }
       }
     });
-  }, [userId]);
+  }, [userId, companyCode]);
 
   const handleOK = (sig) => {
     setSignature(sig);
-    update(ref(rtdb, "employees/" + userId), { signature: sig })
+    update(ref(rtdb, `companies/${companyCode}/employees/${userId}`), { signature: sig })
       .then(() => {
         Alert.alert("Succes", "Kontrakt underskrevet!");
         setModalVisible(false);

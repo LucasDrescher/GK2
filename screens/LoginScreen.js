@@ -27,57 +27,76 @@ export default function LoginScreen({ navigation }) {
     }
 
     const dbRef = ref(rtdb);
-    get(child(dbRef, "employees"))
+    get(child(dbRef, "companies"))
       .then((snapshot) => {
         if (!snapshot.exists()) {
-          Alert.alert("Fejl", "Ingen brugere fundet");
+          Alert.alert("Fejl", "Ingen virksomheder fundet");
           return;
         }
+        const companies = snapshot.val();
+        let foundUser = null;
+        let foundCompanyCode = null;
+        let foundUserId = null;
+        // Gennemgå alle virksomheder og deres admins/employees
+        Object.entries(companies).forEach(([companyCode, companyData]) => {
+          // Tjek admins
+          if (companyData && companyData.admins) {
+            Object.entries(companyData.admins).forEach(([userId, u]) => {
+              const userEmail = ((u && u.email) || "").toLowerCase().trim();
+              const userPassword = ((u && u.password) || "").trim();
+              const userCompanyCode = ((u && u.companyCode) || "").toString().trim();
+              if (!foundUser && userEmail === normEmail && userPassword === normPassword) {
+                foundUser = { id: userId, ...u };
+                foundCompanyCode = companyCode;
+                foundUserId = userId;
+              }
+              if (!foundUser && userEmail === normEmail && !userPassword && userCompanyCode === normPassword) {
+                foundUser = { id: userId, ...u };
+                foundCompanyCode = companyCode;
+                foundUserId = userId;
+              }
+            });
+          }
+          // Tjek employees
+          if (companyData && companyData.employees) {
+            Object.entries(companyData.employees).forEach(([userId, u]) => {
+              const userEmail = ((u && u.email) || "").toLowerCase().trim();
+              const userPassword = ((u && u.password) || "").trim();
+              const userCompanyCode = ((u && u.companyCode) || "").toString().trim();
+              if (!foundUser && userEmail === normEmail && userPassword === normPassword) {
+                foundUser = { id: userId, ...u };
+                foundCompanyCode = companyCode;
+                foundUserId = userId;
+              }
+              if (!foundUser && userEmail === normEmail && !userPassword && userCompanyCode === normPassword) {
+                foundUser = { id: userId, ...u };
+                foundCompanyCode = companyCode;
+                foundUserId = userId;
+              }
+            });
+          }
+        });
 
-        const data = snapshot.val();
-        const users = Object.entries(data).map(([id, u]) => ({
-          id,
-          ...u,
-          email: ((u && u.email) || "").toLowerCase().trim(),
-          password: ((u && u.password) || "").trim(),
-          companyCode: ((u && u.companyCode) || "").toString().trim(),
-          role: (u && u.role) || "employee",
-          approved: !!(u && u.approved),
-        }));
-
-
-        // Først prøv at finde bruger med email+password (nyt flow)
-        let user = users.find(
-          (u) => u.email === normEmail && u.password === normPassword
-        );
-
-        // Hvis ikke fundet, prøv fallback: email+companyCode (gammelt flow)
-        if (!user) {
-          user = users.find(
-            (u) => u.email === normEmail && !u.password && u.companyCode === normPassword
-          );
-        }
-
-        if (!user) {
+        if (!foundUser) {
           Alert.alert("Fejl", "Forkert email, password eller virksomhedskode");
           return;
         }
 
-        if (user.role === "admin") {
+        if (foundUser.role === "admin") {
           navigation.reset({
             index: 0,
             routes: [
               {
                 name: "AdminHome",
-                params: { companyCode: user.companyCode },
+                params: { companyCode: foundCompanyCode },
               },
             ],
           });
           return;
         }
 
-        if (user.role === "employee") {
-          if (!user.approved) {
+        if (foundUser.role === "employee") {
+          if (!foundUser.approved) {
             Alert.alert("Info", "Din tilmelding skal godkendes af lederen");
             return;
           }
@@ -86,7 +105,7 @@ export default function LoginScreen({ navigation }) {
             routes: [
               {
                 name: "EmployeeHome",
-                params: { userId: user.id, companyCode: user.companyCode },
+                params: { userId: foundUserId, companyCode: foundCompanyCode },
               },
             ],
           });

@@ -40,9 +40,9 @@ export default function AdminRegisterScreen({ navigation }) {
       code: companyCode,
     });
 
-    // Opret admin-bruger
+    // Opret admin-bruger (nu under admins)
     const adminId = Date.now();
-    await set(ref(rtdb, `companies/${companyCode}/employees/${adminId}`), {
+    await set(ref(rtdb, `companies/${companyCode}/admins/${adminId}`), {
       firstName: "Admin",
       lastName: "Bruger",
       email: adminEmail,
