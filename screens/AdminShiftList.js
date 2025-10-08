@@ -20,7 +20,8 @@ import { GlobalStyle as GS, Farver } from "../styles/GlobalStyle";
 // Hvis du vil bruge datetimepicker:
 // import DateTimePicker from '@react-native-community/datetimepicker';
 
-export default function AdminShiftList({ navigation }) {
+export default function AdminShiftList({ route, navigation }) {
+  const { companyCode } = route.params || {};
   const [shifts, setShifts] = useState(null);
   const [employees, setEmployees] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
@@ -35,13 +36,14 @@ export default function AdminShiftList({ navigation }) {
 
   // Hent vagter og medarbejdere
   useEffect(() => {
-    const shiftRef = ref(rtdb, "Shifts");
+    if (!companyCode) return;
+    const shiftRef = ref(rtdb, `companies/${companyCode}/shifts`);
     const unsubscribe = onValue(shiftRef, (snap) => {
       const data = snap.val();
       setShifts(data || {});
     });
 
-    const empRef = ref(rtdb, "Employees");
+    const empRef = ref(rtdb, `companies/${companyCode}/employees`);
     const unsubEmp = onValue(empRef, (snap) => {
       const data = snap.val();
       setEmployees(data || {});
@@ -51,7 +53,7 @@ export default function AdminShiftList({ navigation }) {
       unsubscribe();
       unsubEmp();
     };
-  }, []);
+  }, [companyCode]);
 
   const openModal = (shiftId = null) => {
     if (shiftId && shifts[shiftId]) {
@@ -82,10 +84,10 @@ export default function AdminShiftList({ navigation }) {
 
     try {
       if (editingId) {
-        await update(ref(rtdb, `Shifts/${editingId}`), formData);
+        await update(ref(rtdb, `companies/${companyCode}/shifts/${editingId}`), formData);
         Alert.alert("Vagt opdateret");
       } else {
-        await push(ref(rtdb, "Shifts"), formData);
+        await push(ref(rtdb, `companies/${companyCode}/shifts`), formData);
         Alert.alert("Ny vagt oprettet");
       }
       setModalVisible(false);
@@ -96,7 +98,7 @@ export default function AdminShiftList({ navigation }) {
 
   const deleteShift = async (id) => {
     try {
-      await remove(ref(rtdb, `Shifts/${id}`));
+      await remove(ref(rtdb, `companies/${companyCode}/shifts/${id}`));
       Alert.alert("Vagt slettet");
     } catch (e) {
       Alert.alert("Fejl: " + e.message);

@@ -21,10 +21,11 @@ export default function RegisterScreen({ navigation }) {
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [companyCode, setCompanyCode] = useState("");
 
   const handleRegister = () => {
-    if (!firstName || !lastName || !birthday || !address || !country || !email || !companyCode) {
+    if (!firstName || !lastName || !birthday || !address || !country || !email || !password || !companyCode) {
       Alert.alert("Fejl", "Udfyld alle felter!");
       return;
     }
@@ -41,13 +42,14 @@ export default function RegisterScreen({ navigation }) {
 
         const companyName = snapshot.val().name;
 
-        set(ref(rtdb, "employees/" + userId), {
+        set(ref(rtdb, `companies/${companyCode}/employees/${userId}`), {
           firstName,
           lastName,
           birthday,
           address,
           country,
           email,
+          password, // gem password
           companyCode,
           companyName,
           role: "employee",
@@ -131,6 +133,18 @@ export default function RegisterScreen({ navigation }) {
               style={globalStyles.input}
               autoCapitalize="none"
               keyboardType="email-address"
+              returnKeyType="next"
+            />
+
+
+            <Text>Password:</Text>
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              style={globalStyles.input}
+              secureTextEntry
+              autoCapitalize="none"
               returnKeyType="next"
             />
 

@@ -9,14 +9,13 @@ export default function AdminScreen({ route, navigation }) {
   const [pendingEmployees, setPendingEmployees] = useState([]);
 
   useEffect(() => {
-    const employeesRef = ref(rtdb, "employees");
+    const employeesRef = ref(rtdb, `companies/${companyCode}/employees`);
     onValue(employeesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const pending = Object.entries(data)
           .filter(([id, emp]) =>
             emp.approved === false &&
-            emp.companyCode === companyCode &&
             emp.role === "employee"
           )
           .map(([id, emp]) => ({ id, ...emp }));
@@ -28,13 +27,13 @@ export default function AdminScreen({ route, navigation }) {
   }, [companyCode]);
 
   const handleApprove = (id) => {
-    update(ref(rtdb, "employees/" + id), { approved: true })
+    update(ref(rtdb, `companies/${companyCode}/employees/` + id), { approved: true })
       .then(() => Alert.alert("Succes", "Medarbejder godkendt!"))
       .catch((err) => Alert.alert("Fejl", err.message));
   };
 
   const handleReject = (id) => {
-    update(ref(rtdb, "employees/" + id), { approved: "rejected" })
+    update(ref(rtdb, `companies/${companyCode}/employees/` + id), { approved: "rejected" })
       .then(() => Alert.alert("Info", "Medarbejder afvist."))
       .catch((err) => Alert.alert("Fejl", err.message));
   };

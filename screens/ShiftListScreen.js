@@ -18,7 +18,7 @@ export default function ShiftListScreen({ route }) {
     console.log("[SHIFTS] userId fra route:", userId);
 
     // Hent medarbejder-data
-    const empRef = ref(rtdb, "employees/" + userId);
+    const empRef = ref(rtdb, `companies/${companyCode}/employees/` + userId);
     onValue(empRef, (snapshot) => {
       const empData = snapshot.val();
       console.log("[SHIFTS] medarbejderdata:", empData);
@@ -29,7 +29,7 @@ export default function ShiftListScreen({ route }) {
         if (empData.approved) {
           // Brug companyCode fra employee eller fallback fra route
           const code = empData.companyCode || companyCode;
-          const shiftsRef = ref(rtdb, "shifts/" + code);
+          const shiftsRef = ref(rtdb, `companies/${code}/shifts`);
 
           onValue(shiftsRef, (snap) => {
             const shiftData = snap.val();

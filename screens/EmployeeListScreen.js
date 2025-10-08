@@ -9,13 +9,11 @@ export default function EmployeeListScreen({ route }) {
   const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
-    const employeesRef = ref(rtdb, "employees");
+    const employeesRef = ref(rtdb, `companies/${companyCode}/employees`);
     onValue(employeesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const allEmployees = Object.entries(data)
-          .filter(([id, emp]) => emp.companyCode === companyCode)
-          .map(([id, emp]) => ({ id, ...emp }));
+        const allEmployees = Object.entries(data).map(([id, emp]) => ({ id, ...emp }));
         setEmployees(allEmployees);
       } else {
         setEmployees([]);

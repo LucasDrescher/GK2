@@ -96,7 +96,8 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
+  <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
+  <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
         <Stack.Screen name="EmployeeHome" component={EmployeeDrawer} options={{ headerShown: false }} />
         <Stack.Screen name="AdminHome" component={AdminDrawer} options={{ headerShown: false }} />
       </Stack.Navigator>

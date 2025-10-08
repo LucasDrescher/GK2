@@ -15,60 +15,55 @@ import { globalStyles } from "../styles";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
-  const [companyCode, setCompanyCode] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = () => {
     const normEmail = (email || "").toLowerCase().trim();
-    const normCode = (companyCode || "").toString().trim();
+    const normPassword = (password || "").trim();
 
-    if (!normEmail || !normCode) {
-      Alert.alert("Fejl", "Udfyld både email og virksomhedskode");
+    if (!normEmail || !normPassword) {
+      Alert.alert("Fejl", "Udfyld både email og password");
       return;
     }
-
-    console.log("[LOGIN] input:", { normEmail, normCode });
 
     const dbRef = ref(rtdb);
     get(child(dbRef, "employees"))
       .then((snapshot) => {
         if (!snapshot.exists()) {
-          console.log("[LOGIN] employees tom/ikke fundet");
           Alert.alert("Fejl", "Ingen brugere fundet");
           return;
         }
 
         const data = snapshot.val();
-        console.log("[LOGIN] rå data fra Firebase:", data);
-
-        
         const users = Object.entries(data).map(([id, u]) => ({
           id,
           ...u,
           email: ((u && u.email) || "").toLowerCase().trim(),
+          password: ((u && u.password) || "").trim(),
           companyCode: ((u && u.companyCode) || "").toString().trim(),
           role: (u && u.role) || "employee",
           approved: !!(u && u.approved),
         }));
 
-        console.log("[LOGIN] normaliserede users:", users);
 
-        
-        const user = users.find(
-          (u) => u.email === normEmail && u.companyCode === normCode
+        // Først prøv at finde bruger med email+password (nyt flow)
+        let user = users.find(
+          (u) => u.email === normEmail && u.password === normPassword
         );
 
-        console.log("[LOGIN] matchet user:", user);
+        // Hvis ikke fundet, prøv fallback: email+companyCode (gammelt flow)
+        if (!user) {
+          user = users.find(
+            (u) => u.email === normEmail && !u.password && u.companyCode === normPassword
+          );
+        }
 
         if (!user) {
-          Alert.alert("Fejl", "Forkert email eller virksomhedskode");
+          Alert.alert("Fejl", "Forkert email, password eller virksomhedskode");
           return;
         }
 
-        
         if (user.role === "admin") {
-          console.log("[LOGIN] admin login OK → AdminHome");
-
-          
           navigation.reset({
             index: 0,
             routes: [
@@ -83,13 +78,9 @@ export default function LoginScreen({ navigation }) {
 
         if (user.role === "employee") {
           if (!user.approved) {
-            console.log("[LOGIN] employee ikke godkendt endnu");
             Alert.alert("Info", "Din tilmelding skal godkendes af lederen");
             return;
           }
-          console.log("[LOGIN] employee godkendt → EmployeeHome, userId:", user.id);
-
-          
           navigation.reset({
             index: 0,
             routes: [
@@ -105,7 +96,6 @@ export default function LoginScreen({ navigation }) {
         Alert.alert("Fejl", "Ugyldig brugerrolle");
       })
       .catch((error) => {
-        console.log("[LOGIN] fejl ved get employees:", error);
         Alert.alert("Fejl", error.message);
       });
   };
@@ -128,13 +118,15 @@ export default function LoginScreen({ navigation }) {
           style={globalStyles.input}
         />
 
-        <Text>Virksomhedskode:</Text>
+
+        <Text>Password:</Text>
         <TextInput
-          placeholder="Kode"
-          value={companyCode}
-          onChangeText={setCompanyCode}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
           style={globalStyles.input}
           autoCapitalize="none"
+          secureTextEntry
         />
 
         <View style={globalStyles.button}>
@@ -145,6 +137,38 @@ export default function LoginScreen({ navigation }) {
           <Button
             title="Opret bruger"
             onPress={() => navigation.navigate("Register")}
+          />
+        </View>
+        <View style={{ marginTop: 10 }}>
+          <Button
+            title="Opret virksomhed & admin"
+            onPress={() => navigation.navigate("AdminRegisterScreen")}
+          />
+        </View>
+
+        {/* MIDLOERTIDIGE TESTKNAPPER */}
+        <View style={{ marginTop: 30 }}>
+          <Button
+            title="[TEST] Gå til EmployeeHome"
+            color="#888"
+            onPress={() => navigation.reset({
+              index: 0,
+              routes: [
+                { name: "EmployeeHome", params: { userId: "testUser1", companyCode: "2000" } },
+              ],
+            })}
+          />
+        </View>
+        <View style={{ marginTop: 10 }}>
+          <Button
+            title="[TEST] Gå til AdminHome"
+            color="#888"
+            onPress={() => navigation.reset({
+              index: 0,
+              routes: [
+                { name: "AdminHome", params: { companyCode: "2000" } },
+              ],
+            })}
           />
         </View>
       </ScrollView>
