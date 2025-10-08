@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { rtdb } from "../database/firebase";
 import { ref, set, get, child } from "firebase/database";
 import { globalStyles } from "../styles";
@@ -14,7 +24,6 @@ export default function RegisterScreen({ navigation }) {
   const [companyCode, setCompanyCode] = useState("");
 
   const handleRegister = () => {
-    // Tjek om alle felter er udfyldt
     if (!firstName || !lastName || !birthday || !address || !country || !email || !companyCode) {
       Alert.alert("Fejl", "Udfyld alle felter!");
       return;
@@ -22,7 +31,6 @@ export default function RegisterScreen({ navigation }) {
 
     const userId = Date.now();
 
-    // Tjek virksomhedskoden i Firebase
     const companyRef = ref(rtdb);
     get(child(companyRef, `companies/${companyCode}`))
       .then((snapshot) => {
@@ -33,7 +41,6 @@ export default function RegisterScreen({ navigation }) {
 
         const companyName = snapshot.val().name;
 
-        // Gem medarbejderdata under employees
         set(ref(rtdb, "employees/" + userId), {
           firstName,
           lastName,
@@ -44,7 +51,7 @@ export default function RegisterScreen({ navigation }) {
           companyCode,
           companyName,
           role: "employee",
-          approved: false // Lederen skal acceptere senere
+          approved: false,
         })
           .then(() => {
             Alert.alert(
@@ -59,38 +66,90 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={globalStyles.container}>
-        <Text style={globalStyles.title}>Registrer medarbejder</Text>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAwareScrollView
+            contentContainerStyle={[globalStyles.container, { paddingBottom: 100 }]}
+            showsVerticalScrollIndicator={false}
+            enableOnAndroid
+            extraScrollHeight={100} // løfter visningen så aktive felter aldrig dækkes
+            keyboardOpeningTime={0}
+          >
+            <Text style={globalStyles.title}>Registrer medarbejder</Text>
 
-        <Text>Fornavn:</Text>
-        <TextInput placeholder="Fornavn" value={firstName} onChangeText={setFirstName} style={globalStyles.input} />
+            <Text>Fornavn:</Text>
+            <TextInput
+              placeholder="Fornavn"
+              value={firstName}
+              onChangeText={setFirstName}
+              style={globalStyles.input}
+              returnKeyType="next"
+            />
 
-        <Text>Efternavn:</Text>
-        <TextInput placeholder="Efternavn" value={lastName} onChangeText={setLastName} style={globalStyles.input} />
+            <Text>Efternavn:</Text>
+            <TextInput
+              placeholder="Efternavn"
+              value={lastName}
+              onChangeText={setLastName}
+              style={globalStyles.input}
+              returnKeyType="next"
+            />
 
-        <Text>Fødselsdag:</Text>
-        <TextInput placeholder="dd-mm-yyyy" value={birthday} onChangeText={setBirthday} style={globalStyles.input} />
+            <Text>Fødselsdag:</Text>
+            <TextInput
+              placeholder="dd-mm-yyyy"
+              value={birthday}
+              onChangeText={setBirthday}
+              style={globalStyles.input}
+              returnKeyType="next"
+            />
 
-        <Text>Adresse:</Text>
-        <TextInput placeholder="Adresse" value={address} onChangeText={setAddress} style={globalStyles.input} />
+            <Text>Adresse:</Text>
+            <TextInput
+              placeholder="Adresse"
+              value={address}
+              onChangeText={setAddress}
+              style={globalStyles.input}
+              returnKeyType="next"
+            />
 
-        <Text>Land:</Text>
-        <TextInput placeholder="Land" value={country} onChangeText={setCountry} style={globalStyles.input} />
+            <Text>Land:</Text>
+            <TextInput
+              placeholder="Land"
+              value={country}
+              onChangeText={setCountry}
+              style={globalStyles.input}
+              returnKeyType="next"
+            />
 
-        <Text>Email:</Text>
-        <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={globalStyles.input} />
+            <Text>Email:</Text>
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              style={globalStyles.input}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
 
-        <Text>Virksomhedskode:</Text>
-        <TextInput placeholder="Kode" value={companyCode} onChangeText={setCompanyCode} style={globalStyles.input} />
+            <Text>Virksomhedskode:</Text>
+            <TextInput
+              placeholder="Kode"
+              value={companyCode}
+              onChangeText={setCompanyCode}
+              style={globalStyles.input}
+              autoCapitalize="none"
+              returnKeyType="done"
+            />
 
-        <View style={globalStyles.button}>
-          <Button title="Register" onPress={handleRegister} />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <View style={globalStyles.button}>
+              <Button title="Register" onPress={handleRegister} />
+            </View>
+          </KeyboardAwareScrollView>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
