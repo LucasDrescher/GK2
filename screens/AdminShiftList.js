@@ -9,16 +9,16 @@ import {
   Alert,
   Modal,
   TextInput,
-  StyleSheet,
   ScrollView,
+  Platform,
 } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { rtdb } from "../database/firebase";
 import { ref, onValue, push, update, remove } from "firebase/database";
-import { GlobalStyle as GS, Farver } from "../styles/GlobalStyle";
+import { globalStyles } from "../styles";
 
-// Hvis du vil bruge datetimepicker:
-// import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 export default function AdminShiftList({ route, navigation }) {
   const { companyCode } = route.params || {};
@@ -31,8 +31,16 @@ export default function AdminShiftList({ route, navigation }) {
     contactPerson: "",
     startTime: "",
     endTime: "",
-    assignedTo: "",
+    assignedTo: [],
+    date: new Date(),
   });
+  const [searchText, setSearchText] = useState("");
+  const [shiftSearchText, setShiftSearchText] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [viewMode, setViewMode] = useState("list"); // "list" eller "week"
 
   // Hent vagter og medarbejdere
   useEffect(() => {
@@ -46,7 +54,16 @@ export default function AdminShiftList({ route, navigation }) {
     const empRef = ref(rtdb, `companies/${companyCode}/employees`);
     const unsubEmp = onValue(empRef, (snap) => {
       const data = snap.val();
-      setEmployees(data || {});
+      // Filtrer kun godkendte medarbejdere
+      const approvedEmployees = {};
+      if (data) {
+        Object.entries(data).forEach(([id, emp]) => {
+          if (emp.approved === true && emp.role === "employee") {
+            approvedEmployees[id] = emp;
+          }
+        });
+      }
+      setEmployees(approvedEmployees);
     });
 
     return () => {
@@ -55,10 +72,122 @@ export default function AdminShiftList({ route, navigation }) {
     };
   }, [companyCode]);
 
-  const openModal = (shiftId = null) => {
-    if (shiftId && shifts[shiftId]) {
+  // Hjælpefunktioner til dato og tid
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+  };
+
+  const formatDateDisplay = (date) => {
+    return date.toLocaleDateString('da-DK', { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short' 
+    });
+  };
+
+  const formatTime = (date) => {
+    return date.toTimeString().slice(0, 5); // HH:MM
+  };
+
+  const getWeekDays = (date) => {
+    const week = [];
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      week.push(day);
+    }
+    return week;
+  };
+
+  const getShiftsForDate = (date) => {
+    const dateStr = formatDate(date);
+    return Object.entries(shifts).filter(([id, shift]) => {
+      return shift.date === dateStr;
+    });
+  };
+
+  const onDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setFormData({ ...formData, date: selectedDate });
+    }
+  };
+
+  const onStartTimeChange = (event, selectedTime) => {
+    if (Platform.OS === 'android') {
+      setShowStartTimePicker(false);
+    }
+    if (selectedTime) {
+      setFormData({ ...formData, startTime: formatTime(selectedTime) });
+    }
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    if (Platform.OS === 'android') {
+      setShowEndTimePicker(false);
+    }
+    if (selectedTime) {
+      setFormData({ ...formData, endTime: formatTime(selectedTime) });
+    }
+  };
+
+  const toggleEmployee = (employeeId, employeeName) => {
+    const currentAssigned = formData.assignedTo || [];
+    const employeeData = { id: employeeId, name: employeeName };
+    
+    const isAssigned = currentAssigned.some(emp => emp.id === employeeId);
+    
+    if (isAssigned) {
+      // Fjern medarbejder
+      const updatedAssigned = currentAssigned.filter(emp => emp.id !== employeeId);
+      setFormData({ ...formData, assignedTo: updatedAssigned });
+    } else {
+      // Tilføj medarbejder
+      setFormData({ ...formData, assignedTo: [...currentAssigned, employeeData] });
+    }
+  };
+
+  const removeEmployee = (employeeId) => {
+    const updatedAssigned = formData.assignedTo.filter(emp => emp.id !== employeeId);
+    setFormData({ ...formData, assignedTo: updatedAssigned });
+  };
+
+  // Filtrer medarbejdere baseret på søgetekst
+  const filteredEmployees = Object.entries(employees).filter(([id, emp]) => {
+    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+    const email = emp.email?.toLowerCase() || "";
+    const search = searchText.toLowerCase();
+    
+    return fullName.includes(search) || email.includes(search);
+  });
+
+  // Filtrer vagter baseret på søgetekst (kun medarbejdernavne)
+  const filteredShifts = shifts ? Object.entries(shifts).filter(([id, shift]) => {
+    const search = shiftSearchText.toLowerCase();
+    const assignedEmployees = Array.isArray(shift.assignedTo) 
+      ? shift.assignedTo.map(emp => (emp.name || emp).toLowerCase()).join(" ")
+      : (shift.assignedTo?.toLowerCase() || "");
+    
+    return assignedEmployees.includes(search);
+  }) : [];
+
+  const openModal = (shiftId = null, presetDate = null) => {
+    if (shiftId && shifts && shifts[shiftId]) {
       setEditingId(shiftId);
-      setFormData({ ...shifts[shiftId] });
+      const shiftData = shifts[shiftId];
+      setFormData({
+        ...shiftData,
+        date: shiftData.date ? new Date(shiftData.date) : new Date(),
+        assignedTo: Array.isArray(shiftData.assignedTo) ? shiftData.assignedTo : 
+                   shiftData.assignedTo ? [{ name: shiftData.assignedTo }] : [],
+      });
     } else {
       setEditingId(null);
       setFormData({
@@ -66,9 +195,11 @@ export default function AdminShiftList({ route, navigation }) {
         contactPerson: "",
         startTime: "",
         endTime: "",
-        assignedTo: "",
+        assignedTo: [],
+        date: presetDate || new Date(),
       });
     }
+    setSearchText("");
     setModalVisible(true);
   };
 
@@ -82,15 +213,21 @@ export default function AdminShiftList({ route, navigation }) {
       return Alert.alert("Udfyld alle felter!");
     }
 
+    const shiftData = {
+      ...formData,
+      date: formatDate(formData.date),
+    };
+
     try {
       if (editingId) {
-        await update(ref(rtdb, `companies/${companyCode}/shifts/${editingId}`), formData);
+        await update(ref(rtdb, `companies/${companyCode}/shifts/${editingId}`), shiftData);
         Alert.alert("Vagt opdateret");
       } else {
-        await push(ref(rtdb, `companies/${companyCode}/shifts`), formData);
+        await push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
         Alert.alert("Ny vagt oprettet");
       }
       setModalVisible(false);
+      setSearchText("");
     } catch (e) {
       Alert.alert("Fejl: " + e.message);
     }
@@ -107,8 +244,8 @@ export default function AdminShiftList({ route, navigation }) {
 
   if (shifts === null) {
     return (
-      <SafeAreaView style={GS.container}>
-        <View style={[GS.center, { marginTop: 50 }]}>
+      <SafeAreaView style={globalStyles.container}>
+        <View style={[globalStyles.center, { marginTop: 50 }]}>
           <ActivityIndicator />
           <Text>Indlæser vagter…</Text>
         </View>
@@ -116,54 +253,197 @@ export default function AdminShiftList({ route, navigation }) {
     );
   }
 
-  const ids = Object.keys(shifts);
+  const ids = shifts ? Object.keys(shifts) : [];
+  const weekDays = getWeekDays(currentWeek);
+
+  const renderDayView = () => {
+    const today = new Date();
+    const todayShifts = getShiftsForDate(today);
+
+    return (
+      <ScrollView style={{ flex: 1 }}>
+        {/* Dagens vagter */}
+        <View style={globalStyles.dayHeader}>
+          <Text style={globalStyles.dayHeaderText}>
+            {formatDateDisplay(today)}
+          </Text>
+        </View>
+
+        {todayShifts.length === 0 ? (
+          <View style={[globalStyles.center, { marginTop: 50 }]}>
+            <Text style={{ textAlign: "center", color: "#666" }}>
+              Ingen vagter i dag
+            </Text>
+          </View>
+        ) : (
+          todayShifts.map(([shiftId, shift]) => (
+            <TouchableOpacity
+              key={shiftId}
+              style={globalStyles.shiftCard}
+              onPress={() => openModal(shiftId)}
+            >
+              <View style={globalStyles.shiftTimeContainer}>
+                <Text style={globalStyles.shiftTime}>
+                  {shift.startTime}–{shift.endTime}
+                </Text>
+              </View>
+              <View style={globalStyles.shiftDetails}>
+                <Text style={globalStyles.shiftArea}>{shift.area}</Text>
+                <Text style={globalStyles.shiftContact}>
+                  Kontakt: {shift.contactPerson}
+                </Text>
+                <Text style={globalStyles.shiftEmployees}>
+                  👷 {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
+                    ? shift.assignedTo.map(emp => emp.name || emp).join(", ")
+                    : "Ikke tildelt"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={globalStyles.deleteBtn}
+                onPress={() => deleteShift(shiftId)}
+              >
+                <Text style={globalStyles.deleteBtnText}>🗑️</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+    );
+  };
+
+  const renderWeekView = () => {
+    return (
+      <ScrollView style={{ flex: 1 }}>
+        {/* Uge navigation */}
+        <View style={globalStyles.weekNavigation}>
+          <TouchableOpacity
+            style={globalStyles.navBtn}
+            onPress={() => {
+              const prevWeek = new Date(currentWeek);
+              prevWeek.setDate(currentWeek.getDate() - 7);
+              setCurrentWeek(prevWeek);
+            }}
+          >
+            <Text style={globalStyles.navBtnText}>◀</Text>
+          </TouchableOpacity>
+          
+          <Text style={globalStyles.weekText}>
+            Uge {Math.ceil((currentWeek - new Date(currentWeek.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))}
+          </Text>
+          
+          <TouchableOpacity
+            style={globalStyles.navBtn}
+            onPress={() => {
+              const nextWeek = new Date(currentWeek);
+              nextWeek.setDate(currentWeek.getDate() + 7);
+              setCurrentWeek(nextWeek);
+            }}
+          >
+            <Text style={globalStyles.navBtnText}>▶</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Ugedage */}
+        {weekDays.map((day, index) => {
+          const dayShifts = getShiftsForDate(day);
+          const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          
+          return (
+            <View key={index} style={[
+              globalStyles.weekDay,
+              isWeekend && globalStyles.weekendDay
+            ]}>
+              <View style={globalStyles.weekDayHeader}>
+                <Text style={globalStyles.weekDayHeaderText}>
+                  {formatDateDisplay(day)}
+                </Text>
+                <TouchableOpacity
+                  style={globalStyles.addShiftBtn}
+                  onPress={() => openModal(null, day)}
+                >
+                  <Text style={globalStyles.addShiftBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+
+              {dayShifts.length === 0 ? (
+                <Text style={globalStyles.noShiftsText}>Ingen vagter</Text>
+              ) : (
+                dayShifts.map(([shiftId, shift]) => (
+                  <TouchableOpacity
+                    key={shiftId}
+                    style={globalStyles.weekShiftCard}
+                    onPress={() => openModal(shiftId)}
+                  >
+                    <Text style={globalStyles.weekShiftTime}>
+                      {shift.startTime}–{shift.endTime}
+                    </Text>
+                    <Text style={globalStyles.weekShiftArea}>{shift.area}</Text>
+                    <Text style={globalStyles.weekShiftEmployees}>
+                      {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
+                        ? `${shift.assignedTo.length} medarbejdere`
+                        : "Ikke tildelt"}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+    );
+  };
 
   return (
-    <SafeAreaView style={GS.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>📋 Admin – Vagtplan</Text>
-        <Button title="➕ Ny vagt" onPress={() => openModal()} color={Farver.primær} />
+    <SafeAreaView style={globalStyles.container}>
+      <View style={globalStyles.header}>
+        <Text style={globalStyles.headerText}>📋 Vagtplan</Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity
+            style={globalStyles.viewToggleBtn}
+            onPress={() => setViewMode(viewMode === 'list' ? 'week' : 'list')}
+          >
+            <Text style={globalStyles.viewToggleBtnText}>
+              {viewMode === 'list' ? '📅' : '📋'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={globalStyles.addBtn}
+            onPress={() => openModal()}
+          >
+            <Text style={globalStyles.addBtnText}>➕</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* Søgefelt kun for listevisning */}
+      {viewMode === 'list' && ids.length > 0 && (
+        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <TextInput
+            style={globalStyles.shiftInput}
+            placeholder="Søg vagter efter medarbejdernavn..."
+            placeholderTextColor="#888"
+            value={shiftSearchText}
+            onChangeText={setShiftSearchText}
+          />
+        </View>
+      )}
+
       {ids.length === 0 ? (
-        <View style={[GS.center, { marginTop: 50 }]}>
+        <View style={[globalStyles.center, { marginTop: 50 }]}>
           <Text style={{ textAlign: "center" }}>Ingen vagter oprettet endnu</Text>
         </View>
       ) : (
-        <FlatList
-          data={ids}
-          keyExtractor={(id) => id}
-          contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16 }}
-          renderItem={({ item: id }) => {
-            const shift = shifts[id];
-            return (
-              <TouchableOpacity
-                style={styles.cardContainer}
-                onPress={() => openModal(id)}
-              >
-                <Text style={styles.cardTitle}>{shift.area}</Text>
-                <Text style={styles.cardText}>Kontaktperson: {shift.contactPerson}</Text>
-                <Text style={styles.cardText}>
-                  🕒 {shift.startTime} – {shift.endTime}
-                </Text>
-                <Text style={styles.cardText}>
-                  👷 Medarbejder: {shift.assignedTo || "Ikke tildelt"}
-                </Text>
-                <Button title="❌ Slet" color="red" onPress={() => deleteShift(id)} />
-              </TouchableOpacity>
-            );
-          }}
-        />
+        viewMode === 'list' ? renderDayView() : renderWeekView()
       )}
 
       {/* Modal */}
       <Modal visible={modalVisible} animationType="slide">
-        <SafeAreaView style={GS.container}>
-          <ScrollView contentContainerStyle={[GS.skærmIndhold, { paddingHorizontal: 16, paddingTop: 20 }]}>
-            <Text style={styles.modalTitle}>{editingId ? "Rediger vagt" : "Opret ny vagt"}</Text>
+        <SafeAreaView style={globalStyles.container}>
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20 }}>
+            <Text style={globalStyles.modalTitle}>{editingId ? "Rediger vagt" : "Opret ny vagt"}</Text>
 
             <TextInput
-              style={styles.input}
+              style={globalStyles.shiftInput}
               placeholder="Område (fx Bar 1, Podium)"
               placeholderTextColor="#888"
               value={formData.area}
@@ -171,50 +451,208 @@ export default function AdminShiftList({ route, navigation }) {
             />
 
             <TextInput
-              style={styles.input}
+              style={globalStyles.shiftInput}
               placeholder="Kontaktperson (Teamleder)"
               placeholderTextColor="#888"
               value={formData.contactPerson}
               onChangeText={(t) => setFormData({ ...formData, contactPerson: t })}
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Vagtstart (fx 18:00)"
-              placeholderTextColor="#888"
-              value={formData.startTime}
-              onChangeText={(t) => setFormData({ ...formData, startTime: t })}
-            />
-            {/* Hvis du vil bruge DateTimePicker til starttid, kan du indsætte her */}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Vagtslut (fx 23:00)"
-              placeholderTextColor="#888"
-              value={formData.endTime}
-              onChangeText={(t) => setFormData({ ...formData, endTime: t })}
-            />
-            {/* Hvis du vil bruge DateTimePicker til sluttid, kan du indsætte her */}
-
-            <Text style={styles.sectionTitle}>Tilknyt medarbejder</Text>
-            {Object.keys(employees).length === 0 ? (
-              <Text style={{ textAlign: "center" }}>Ingen medarbejdere endnu</Text>
-            ) : (
-              Object.entries(employees).map(([id, emp]) => (
+            {/* Dato og tid sektion */}
+            <Text style={globalStyles.sectionTitle}>📅 Dato og tid</Text>
+            
+            <View style={globalStyles.dateTimeSection}>
+              {/* Dato vælger */}
+              <View style={globalStyles.dateTimeGroup}>
                 <TouchableOpacity
-                  key={id}
-                  style={styles.assignBtn}
-                  onPress={() => setFormData({ ...formData, assignedTo: emp.name })}
+                  style={[globalStyles.modernDateTimeBtn, showDatePicker && globalStyles.modernDateTimeBtnActive]}
+                  onPress={() => setShowDatePicker(!showDatePicker)}
                 >
-                  <Text style={styles.assignText}>{emp.name}</Text>
+                  <View style={globalStyles.dateTimeBtnContent}>
+                    <Text style={globalStyles.dateTimeBtnIcon}>📅</Text>
+                    <View style={globalStyles.dateTimeBtnTextContainer}>
+                      <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
+                      <Text style={globalStyles.dateTimeBtnValue}>
+                        {formatDate(formData.date)}
+                      </Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
-              ))
+                
+                {showDatePicker && (
+                  <View style={globalStyles.modernPickerContainer}>
+                    <DateTimePicker
+                      value={formData.date}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                      onChange={onDateChange}
+                      style={globalStyles.modernPicker}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <TouchableOpacity
+                        style={globalStyles.modernPickerDoneBtn}
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* Start tid vælger */}
+              <View style={globalStyles.dateTimeGroup}>
+                <TouchableOpacity
+                  style={[globalStyles.modernDateTimeBtn, showStartTimePicker && globalStyles.modernDateTimeBtnActive]}
+                  onPress={() => setShowStartTimePicker(!showStartTimePicker)}
+                >
+                  <View style={globalStyles.dateTimeBtnContent}>
+                    <Text style={globalStyles.dateTimeBtnIcon}>🕐</Text>
+                    <View style={globalStyles.dateTimeBtnTextContainer}>
+                      <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
+                      <Text style={globalStyles.dateTimeBtnValue}>
+                        {formData.startTime || "Vælg tid"}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+                
+                {showStartTimePicker && (
+                  <View style={globalStyles.modernPickerContainer}>
+                    <DateTimePicker
+                      value={formData.startTime ? new Date(`2000-01-01T${formData.startTime}:00`) : new Date()}
+                      mode="time"
+                      display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                      onChange={onStartTimeChange}
+                      style={globalStyles.modernPicker}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <TouchableOpacity
+                        style={globalStyles.modernPickerDoneBtn}
+                        onPress={() => setShowStartTimePicker(false)}
+                      >
+                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* Slut tid vælger */}
+              <View style={globalStyles.dateTimeGroup}>
+                <TouchableOpacity
+                  style={[globalStyles.modernDateTimeBtn, showEndTimePicker && globalStyles.modernDateTimeBtnActive]}
+                  onPress={() => setShowEndTimePicker(!showEndTimePicker)}
+                >
+                  <View style={globalStyles.dateTimeBtnContent}>
+                    <Text style={globalStyles.dateTimeBtnIcon}>🕕</Text>
+                    <View style={globalStyles.dateTimeBtnTextContainer}>
+                      <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
+                      <Text style={globalStyles.dateTimeBtnValue}>
+                        {formData.endTime || "Vælg tid"}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+                
+                {showEndTimePicker && (
+                  <View style={globalStyles.modernPickerContainer}>
+                    <DateTimePicker
+                      value={formData.endTime ? new Date(`2000-01-01T${formData.endTime}:00`) : new Date()}
+                      mode="time"
+                      display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                      onChange={onEndTimeChange}
+                      style={globalStyles.modernPicker}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <TouchableOpacity
+                        style={globalStyles.modernPickerDoneBtn}
+                        onPress={() => setShowEndTimePicker(false)}
+                      >
+                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <Text style={globalStyles.sectionTitle}>Tilknyt medarbejdere</Text>
+            
+            {/* Vis nuværende tilknyttede medarbejdere */}
+            {formData.assignedTo && formData.assignedTo.length > 0 && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={[globalStyles.sectionTitle, { fontSize: 14, color: "#666" }]}>Nuværende tilknyttede:</Text>
+                {formData.assignedTo.map((emp, index) => (
+                  <View key={index} style={globalStyles.assignedEmployeeContainer}>
+                    <Text style={globalStyles.assignedEmployeeText}>
+                      {emp.name || emp}
+                    </Text>
+                    <TouchableOpacity
+                      style={globalStyles.removeBtn}
+                      onPress={() => removeEmployee(emp.id || index)}
+                    >
+                      <Text style={globalStyles.removeBtnText}>❌</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Søgefelt */}
+            <Text style={[globalStyles.sectionTitle, { fontSize: 14, color: "#666" }]}>Tilgængelige godkendte medarbejdere:</Text>
+            
+            {Object.keys(employees).length > 0 && (
+              <TextInput
+                style={[globalStyles.shiftInput, { marginBottom: 10 }]}
+                placeholder="Søg medarbejder (navn eller email)..."
+                placeholderTextColor="#888"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+            )}
+
+            {Object.keys(employees).length === 0 ? (
+              <Text style={{ textAlign: "center", marginVertical: 16, color: "#666" }}>
+                Ingen godkendte medarbejdere endnu
+              </Text>
+            ) : filteredEmployees.length === 0 ? (
+              <Text style={{ textAlign: "center", marginVertical: 16, color: "#666" }}>
+                Ingen medarbejdere fundet for "{searchText}"
+              </Text>
+            ) : (
+              filteredEmployees.map(([id, emp]) => {
+                const isAssigned = formData.assignedTo.some(assigned => assigned.id === id);
+                return (
+                  <TouchableOpacity
+                    key={id}
+                    style={[
+                      globalStyles.assignBtn,
+                      isAssigned && globalStyles.assignBtnSelected
+                    ]}
+                    onPress={() => toggleEmployee(id, `${emp.firstName} ${emp.lastName}`)}
+                  >
+                    <Text style={[
+                      globalStyles.assignText,
+                      isAssigned && globalStyles.assignTextSelected
+                    ]}>
+                      {isAssigned ? "✓ " : ""}{emp.firstName} {emp.lastName}
+                    </Text>
+                    <Text style={[globalStyles.assignText, { fontSize: 12, color: "#666" }]}>
+                      {emp.email}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
             )}
 
             <View style={{ marginTop: 24 }}>
-              <Button title="Gem" onPress={saveShift} color={Farver.primær} />
+              <Button title="Gem" onPress={saveShift} color="#007AFF" />
               <View style={{ height: 12 }} />
-              <Button title="Annuller" onPress={() => setModalVisible(false)} />
+              <Button title="Annuller" onPress={() => {
+                setModalVisible(false);
+                setSearchText(""); // Ryd søgefeltet når modal annulleres
+              }} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -222,72 +660,3 @@ export default function AdminShiftList({ route, navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    padding: 16,
-    backgroundColor: "#007AFF",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 20,
-  },
-  cardContainer: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    borderRadius: 10,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  cardTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#222",
-    marginBottom: 4,
-  },
-  cardText: {
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 2,
-  },
-  input: {
-    backgroundColor: "#fff",
-    padding: 10,
-    marginVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    color: "#000", // Synlig tekst
-  },
-  assignBtn: {
-    padding: 10,
-    backgroundColor: "#e0e0e0",
-    marginVertical: 4,
-    borderRadius: 8,
-  },
-  assignText: {
-    color: "#222",
-    fontWeight: "600",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#007AFF",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginTop: 12,
-    marginBottom: 6,
-    color: "#007AFF",
-  },
-});
