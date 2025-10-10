@@ -293,7 +293,7 @@ export default function AdminShiftList({ route, navigation }) {
                   Kontakt: {shift.contactPerson}
                 </Text>
                 <Text style={globalStyles.shiftEmployees}>
-                  👷 {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
+                  Medarbejdere: {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
                     ? shift.assignedTo.map(emp => emp.name || emp).join(", ")
                     : "Ikke tildelt"}
                 </Text>
@@ -302,7 +302,7 @@ export default function AdminShiftList({ route, navigation }) {
                 style={globalStyles.deleteBtn}
                 onPress={() => deleteShift(shiftId)}
               >
-                <Text style={globalStyles.deleteBtnText}>🗑️</Text>
+                <Text style={globalStyles.deleteBtnText}>Slet</Text>
               </TouchableOpacity>
             </TouchableOpacity>
           ))
@@ -396,21 +396,43 @@ export default function AdminShiftList({ route, navigation }) {
   return (
     <SafeAreaView style={globalStyles.container}>
       <View style={globalStyles.header}>
-        <Text style={globalStyles.headerText}>📋 Vagtplan</Text>
+        <Text style={globalStyles.headerText}>Vagtplan</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <TouchableOpacity
-            style={globalStyles.viewToggleBtn}
-            onPress={() => setViewMode(viewMode === 'list' ? 'week' : 'list')}
-          >
-            <Text style={globalStyles.viewToggleBtnText}>
-              {viewMode === 'list' ? '📅' : '📋'}
-            </Text>
-          </TouchableOpacity>
+          <View style={globalStyles.toggleContainer}>
+            <TouchableOpacity
+              style={[
+                globalStyles.toggleBtn,
+                viewMode === 'list' && globalStyles.toggleBtnActive
+              ]}
+              onPress={() => setViewMode('list')}
+            >
+              <Text style={[
+                globalStyles.toggleText,
+                viewMode === 'list' && globalStyles.toggleTextActive
+              ]}>
+                I dag
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                globalStyles.toggleBtn,
+                viewMode === 'week' && globalStyles.toggleBtnActive
+              ]}
+              onPress={() => setViewMode('week')}
+            >
+              <Text style={[
+                globalStyles.toggleText,
+                viewMode === 'week' && globalStyles.toggleTextActive
+              ]}>
+                Uge
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={globalStyles.addBtn}
             onPress={() => openModal()}
           >
-            <Text style={globalStyles.addBtnText}>➕</Text>
+            <Text style={globalStyles.addBtnText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -459,7 +481,7 @@ export default function AdminShiftList({ route, navigation }) {
             />
 
             {/* Dato og tid sektion */}
-            <Text style={globalStyles.sectionTitle}>📅 Dato og tid</Text>
+            <Text style={globalStyles.sectionTitle}>Dato og tid</Text>
             
             <View style={globalStyles.dateTimeSection}>
               {/* Dato vælger */}
@@ -469,7 +491,6 @@ export default function AdminShiftList({ route, navigation }) {
                   onPress={() => setShowDatePicker(!showDatePicker)}
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
-                    <Text style={globalStyles.dateTimeBtnIcon}>📅</Text>
                     <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
                     <Text style={globalStyles.dateTimeBtnValue}>
                       {formatDate(formData.date)}
@@ -490,7 +511,7 @@ export default function AdminShiftList({ route, navigation }) {
                         style={globalStyles.modernPickerDoneBtn}
                         onPress={() => setShowDatePicker(false)}
                       >
-                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                        <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -504,7 +525,6 @@ export default function AdminShiftList({ route, navigation }) {
                   onPress={() => setShowStartTimePicker(!showStartTimePicker)}
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
-                    <Text style={globalStyles.dateTimeBtnIcon}>🕐</Text>
                     <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
                     <Text style={globalStyles.dateTimeBtnValue}>
                       {formData.startTime || "Vælg tid"}
@@ -517,7 +537,6 @@ export default function AdminShiftList({ route, navigation }) {
                   onPress={() => setShowEndTimePicker(!showEndTimePicker)}
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
-                    <Text style={globalStyles.dateTimeBtnIcon}>🕕</Text>
                     <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
                     <Text style={globalStyles.dateTimeBtnValue}>
                       {formData.endTime || "Vælg tid"}
@@ -540,7 +559,7 @@ export default function AdminShiftList({ route, navigation }) {
                       style={globalStyles.modernPickerDoneBtn}
                       onPress={() => setShowStartTimePicker(false)}
                     >
-                      <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                      <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -559,7 +578,7 @@ export default function AdminShiftList({ route, navigation }) {
                       style={globalStyles.modernPickerDoneBtn}
                       onPress={() => setShowEndTimePicker(false)}
                     >
-                      <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                      <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -581,7 +600,7 @@ export default function AdminShiftList({ route, navigation }) {
                       style={globalStyles.removeBtn}
                       onPress={() => removeEmployee(emp.id || index)}
                     >
-                      <Text style={globalStyles.removeBtnText}>❌</Text>
+                      <Text style={globalStyles.removeBtnText}>Fjern</Text>
                     </TouchableOpacity>
                   </View>
                 ))}

@@ -10,8 +10,7 @@ import RegisterScreen from "./screens/RegisterScreen";
 import ShiftListScreen from "./screens/ShiftListScreen";
 import ContractScreen from "./screens/ContractScreen";
 import AdminScreen from "./screens/AdminScreen";
-import EmployeeListScreen from "./screens/EmployeeListScreen";
-import SignedContractsScreen from "./screens/SignedContractsScreen";
+import EmployeeManagementScreen from "./screens/EmployeeManagementScreen";
 import AdminShiftList from "./screens/AdminShiftList";
 
 const Stack = createNativeStackNavigator();
@@ -74,19 +73,13 @@ function AdminDrawer({ route }) {
       <Drawer.Screen
         name="AdminShiftList"
         component={AdminShiftList}
-        options={{ title: "Vagtplan (Admin)" }}
+        options={{ title: "Vagtplan" }}
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
-        name="EmployeeListScreen"
-        component={EmployeeListScreen}
-        options={{ title: "Alle medarbejdere" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="SignedContracts"
-        component={SignedContractsScreen}
-        options={{ title: "Underskrevne kontrakter" }}
+        name="EmployeeManagement"
+        component={EmployeeManagementScreen}
+        options={{ title: "Overblik over medarbejdere" }}
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
