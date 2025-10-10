@@ -529,7 +529,7 @@ export const globalStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
-    width: 100,
+    width: 130,
   },
   detailValue: {
     fontSize: 14,
