@@ -33,6 +33,8 @@ export default function AdminShiftList({ route, navigation }) {
     endTime: "",
     assignedTo: [],
     date: new Date(),
+    selectedDates: [], // Array for multiple dates
+    isMultipleDays: false, // Toggle for single/multiple days
   });
   const [searchText, setSearchText] = useState("");
   const [shiftSearchText, setShiftSearchText] = useState("");
@@ -115,9 +117,41 @@ export default function AdminShiftList({ route, navigation }) {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
-    if (selectedDate) {
-      setFormData({ ...formData, date: selectedDate });
+    if (selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime())) {
+      if (formData.isMultipleDays) {
+        addDateToSelection(selectedDate);
+      } else {
+        setFormData({ ...formData, date: selectedDate });
+      }
     }
+  };
+
+  const addDateToSelection = (date) => {
+    const dateStr = formatDate(date);
+    const currentDates = formData.selectedDates || [];
+    
+    // Tjek om datoen allerede er valgt
+    if (currentDates.includes(dateStr)) {
+      // Fjern datoen hvis den allerede er valgt
+      const updatedDates = currentDates.filter(d => d !== dateStr);
+      setFormData({ ...formData, selectedDates: updatedDates });
+    } else {
+      // Tilføj datoen til listen
+      setFormData({ ...formData, selectedDates: [...currentDates, dateStr] });
+    }
+  };
+
+  const removeDateFromSelection = (dateStr) => {
+    const updatedDates = formData.selectedDates.filter(d => d !== dateStr);
+    setFormData({ ...formData, selectedDates: updatedDates });
+  };
+
+  const toggleMultipleDays = () => {
+    setFormData({ 
+      ...formData, 
+      isMultipleDays: !formData.isMultipleDays,
+      selectedDates: []
+    });
   };
 
   const onStartTimeChange = (event, selectedTime) => {
@@ -182,21 +216,28 @@ export default function AdminShiftList({ route, navigation }) {
     if (shiftId && shifts && shifts[shiftId]) {
       setEditingId(shiftId);
       const shiftData = shifts[shiftId];
+      // Fix: Korrekt parsing af datoen fra database
+      const shiftDate = shiftData.date ? new Date(shiftData.date + 'T12:00:00') : new Date();
       setFormData({
         ...shiftData,
-        date: shiftData.date ? new Date(shiftData.date) : new Date(),
+        date: shiftDate,
+        selectedDates: [],
+        isMultipleDays: false,
         assignedTo: Array.isArray(shiftData.assignedTo) ? shiftData.assignedTo : 
                    shiftData.assignedTo ? [{ name: shiftData.assignedTo }] : [],
       });
     } else {
       setEditingId(null);
+      const initialDate = presetDate ? new Date(presetDate + 'T12:00:00') : new Date();
       setFormData({
         area: "",
         contactPerson: "",
         startTime: "",
         endTime: "",
         assignedTo: [],
-        date: presetDate || new Date(),
+        date: initialDate,
+        selectedDates: [],
+        isMultipleDays: false,
       });
     }
     setSearchText("");
@@ -213,18 +254,51 @@ export default function AdminShiftList({ route, navigation }) {
       return Alert.alert("Udfyld alle felter!");
     }
 
-    const shiftData = {
-      ...formData,
-      date: formatDate(formData.date),
-    };
+    // Tjek om vi har valgte datoer når multiple days er aktiveret
+    if (formData.isMultipleDays && formData.selectedDates.length === 0) {
+      return Alert.alert("Vælg mindst én dato!");
+    }
 
     try {
       if (editingId) {
+        // Opdater eksisterende vagt
+        const shiftData = {
+          area: formData.area,
+          contactPerson: formData.contactPerson,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          assignedTo: formData.assignedTo,
+          date: formatDate(formData.date),
+        };
         await update(ref(rtdb, `companies/${companyCode}/shifts/${editingId}`), shiftData);
         Alert.alert("Vagt opdateret");
       } else {
-        await push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
-        Alert.alert("Ny vagt oprettet");
+        // Opret nye vagter
+        if (formData.isMultipleDays && formData.selectedDates.length > 0) {
+          // Opret en vagt for hver valgte dato
+          const promises = formData.selectedDates.map(dateStr => {
+            const shiftData = {
+              area: formData.area,
+              contactPerson: formData.contactPerson,
+              startTime: formData.startTime,
+              endTime: formData.endTime,
+              assignedTo: formData.assignedTo,
+              date: dateStr,
+            };
+            return push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
+          });
+          
+          await Promise.all(promises);
+          Alert.alert("Succes", `${formData.selectedDates.length} vagter oprettet`);
+        } else {
+          // Opret single vagt
+          const shiftData = {
+            ...formData,
+            date: formatDate(formData.date),
+          };
+          await push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
+          Alert.alert("Ny vagt oprettet");
+        }
       }
       setModalVisible(false);
       setSearchText("");
@@ -234,12 +308,28 @@ export default function AdminShiftList({ route, navigation }) {
   };
 
   const deleteShift = async (id) => {
-    try {
-      await remove(ref(rtdb, `companies/${companyCode}/shifts/${id}`));
-      Alert.alert("Vagt slettet");
-    } catch (e) {
-      Alert.alert("Fejl: " + e.message);
-    }
+    Alert.alert(
+      "Bekræft sletning",
+      "Er du sikker på at du vil slette denne vagt?",
+      [
+        {
+          text: "Annuller",
+          style: "cancel"
+        },
+        {
+          text: "Slet",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await remove(ref(rtdb, `companies/${companyCode}/shifts/${id}`));
+              Alert.alert("Vagt slettet");
+            } catch (e) {
+              Alert.alert("Fejl", e.message);
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (shifts === null) {
@@ -298,12 +388,6 @@ export default function AdminShiftList({ route, navigation }) {
                     : "Ikke tildelt"}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={globalStyles.deleteBtn}
-                onPress={() => deleteShift(shiftId)}
-              >
-                <Text style={globalStyles.deleteBtnText}>Slet</Text>
-              </TouchableOpacity>
             </TouchableOpacity>
           ))
         )}
@@ -483,25 +567,94 @@ export default function AdminShiftList({ route, navigation }) {
             {/* Dato og tid sektion */}
             <Text style={globalStyles.sectionTitle}>Dato og tid</Text>
             
+            {/* Toggle for flere dage (kun for nye vagter) */}
+            {!editingId && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={[
+                    globalStyles.toggleBtn,
+                    formData.isMultipleDays ? globalStyles.toggleBtnActive : { backgroundColor: '#f0f0f0' }
+                  ]}
+                  onPress={toggleMultipleDays}
+                >
+                  <Text style={[
+                    globalStyles.toggleText,
+                    formData.isMultipleDays && globalStyles.toggleTextActive
+                  ]}>
+                    {formData.isMultipleDays ? "✓ Flere dage" : "Flere dage"}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={{ marginLeft: 10, color: "#666", fontSize: 14 }}>
+                  Opret samme vagt på flere datoer
+                </Text>
+              </View>
+            )}
+            
             <View style={globalStyles.dateTimeSection}>
               {/* Dato vælger */}
               <View style={globalStyles.dateTimeGroup}>
-                <TouchableOpacity
-                  style={[globalStyles.modernDateTimeBtn, showDatePicker && globalStyles.modernDateTimeBtnActive]}
-                  onPress={() => setShowDatePicker(!showDatePicker)}
-                >
-                  <View style={globalStyles.dateTimeBtnContent}>
-                    <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
-                    <Text style={globalStyles.dateTimeBtnValue}>
-                      {formatDate(formData.date)}
-                    </Text>
+                {!formData.isMultipleDays ? (
+                  <TouchableOpacity
+                    style={[globalStyles.modernDateTimeBtn, showDatePicker && globalStyles.modernDateTimeBtnActive]}
+                    onPress={() => setShowDatePicker(!showDatePicker)}
+                  >
+                    <View style={globalStyles.dateTimeBtnContent}>
+                      <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
+                      <Text style={globalStyles.dateTimeBtnValue}>
+                        {formData.date ? formatDateDisplay(formData.date) : "Vælg dato"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <View>
+                    <TouchableOpacity
+                      style={[globalStyles.modernDateTimeBtn, showDatePicker && globalStyles.modernDateTimeBtnActive]}
+                      onPress={() => setShowDatePicker(!showDatePicker)}
+                    >
+                      <View style={globalStyles.dateTimeBtnContent}>
+                        <Text style={globalStyles.dateTimeBtnLabel}>Vælg datoer</Text>
+                        <Text style={globalStyles.dateTimeBtnValue}>
+                          {formData.selectedDates.length > 0 
+                            ? `${formData.selectedDates.length} datoer valgt`
+                            : "Tryk for at vælge"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    {/* Vis valgte datoer */}
+                    {formData.selectedDates.length > 0 && (
+                      <View style={{ marginTop: 10 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Valgte datoer:</Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                          {formData.selectedDates.map((dateStr, index) => (
+                            <View key={index} style={{
+                              backgroundColor: '#e7f3ff',
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              borderRadius: 16,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              borderWidth: 1,
+                              borderColor: '#2196F3'
+                            }}>
+                              <Text style={{ fontSize: 12, color: '#2196F3', marginRight: 6 }}>
+                                {formatDateDisplay(new Date(dateStr + 'T00:00:00'))}
+                              </Text>
+                              <TouchableOpacity onPress={() => removeDateFromSelection(dateStr)}>
+                                <Text style={{ fontSize: 14, color: '#2196F3', fontWeight: 'bold' }}>✕</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
                   </View>
-                </TouchableOpacity>
+                )}
                 
                 {showDatePicker && (
                   <View style={globalStyles.modernPickerContainer}>
                     <DateTimePicker
-                      value={formData.date}
+                      value={formData.date instanceof Date && !isNaN(formData.date.getTime()) ? formData.date : new Date()}
                       mode="date"
                       display={Platform.OS === 'ios' ? 'compact' : 'default'}
                       onChange={onDateChange}
@@ -657,6 +810,19 @@ export default function AdminShiftList({ route, navigation }) {
             <View style={{ marginTop: 24 }}>
               <Button title="Gem" onPress={saveShift} color="#007AFF" />
               <View style={{ height: 12 }} />
+              {editingId && (
+                <>
+                  <Button 
+                    title="Slet vagt" 
+                    onPress={() => {
+                      setModalVisible(false);
+                      deleteShift(editingId);
+                    }} 
+                    color="#FF3B30" 
+                  />
+                  <View style={{ height: 12 }} />
+                </>
+              )}
               <Button title="Annuller" onPress={() => {
                 setModalVisible(false);
                 setSearchText(""); // Ryd søgefeltet når modal annulleres

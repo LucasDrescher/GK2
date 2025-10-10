@@ -22,6 +22,7 @@ export default function EmployeeManagementScreen({ route }) {
   const [selectedFilter, setSelectedFilter] = useState("alle");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [shifts, setShifts] = useState({});
 
   useEffect(() => {
     const employeesRef = ref(rtdb, `companies/${companyCode}/employees`);
@@ -44,8 +45,18 @@ export default function EmployeeManagementScreen({ route }) {
       console.error("Firebase onValue error:", error);
     });
 
+    // Hent vagter
+    const shiftsRef = ref(rtdb, `companies/${companyCode}/shifts`);
+    const unsubscribeShifts = onValue(shiftsRef, (snapshot) => {
+      const data = snapshot.val();
+      setShifts(data || {});
+    });
+
     // Cleanup function
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeShifts();
+    };
   }, [companyCode]);
 
   // Håndter når medarbejdere opdateres
@@ -96,6 +107,39 @@ export default function EmployeeManagementScreen({ route }) {
       };
     }
     return { text: "Ukendt", color: "#9E9E9E", icon: "?" };
+  };
+
+  const getEmployeeShifts = (employeeId, employeeName) => {
+    const today = new Date();
+    const employeeShifts = Object.entries(shifts)
+      .filter(([id, shift]) => {
+        if (!shift.assignedTo || !Array.isArray(shift.assignedTo)) return false;
+        
+        // Tjek om medarbejderen er tildelt denne vagt
+        const isAssigned = shift.assignedTo.some(emp => 
+          emp.id === employeeId || emp.name === employeeName
+        );
+        
+        if (!isAssigned) return false;
+        
+        // Kun fremtidige vagter (i dag og fremad)
+        const shiftDate = new Date(shift.date + 'T00:00:00');
+        return shiftDate >= today;
+      })
+      .map(([id, shift]) => ({ ...shift, id }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 5); // Vis max 5 kommende vagter
+
+    return employeeShifts;
+  };
+
+  const formatShiftDate = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('da-DK', { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short' 
+    });
   };
 
   const handleApprove = (id) => {
@@ -267,6 +311,37 @@ export default function EmployeeManagementScreen({ route }) {
                 <DetailRow label="Virksomhed" value={selectedEmployee.companyName} />
                 <DetailRow label="Virksomhedskode" value={selectedEmployee.companyCode} />
               </View>
+
+              {/* Kommende vagter sektion */}
+              {(() => {
+                const employeeShifts = getEmployeeShifts(selectedEmployee.id, `${selectedEmployee.firstName} ${selectedEmployee.lastName}`);
+                
+                if (employeeShifts.length > 0) {
+                  return (
+                    <View style={globalStyles.shiftsContainer}>
+                      <Text style={globalStyles.shiftsTitle}>📅 Kommende vagter ({employeeShifts.length})</Text>
+                      {employeeShifts.map((shift, index) => (
+                        <View key={shift.id || index} style={globalStyles.shiftItem}>
+                          <View style={globalStyles.shiftDateArea}>
+                            <Text style={globalStyles.shiftDate}>{formatShiftDate(shift.date)}</Text>
+                            <Text style={globalStyles.shiftArea}>{shift.area}</Text>
+                          </View>
+                          <Text style={globalStyles.shiftTime}>
+                            {shift.startTime} - {shift.endTime}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                } else {
+                  return (
+                    <View style={globalStyles.shiftsContainer}>
+                      <Text style={globalStyles.shiftsTitle}>📅 Kommende vagter</Text>
+                      <Text style={globalStyles.noShiftsText}>Ingen kommende vagter</Text>
+                    </View>
+                  );
+                }
+              })()}
 
               {selectedEmployee.signature && (
                 <View style={globalStyles.signatureContainer}>

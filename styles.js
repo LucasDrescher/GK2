@@ -536,6 +536,58 @@ export const globalStyles = StyleSheet.create({
     color: '#666',
     flex: 1,
   },
+  // Vagter sektion i medarbejder detaljer
+  shiftsContainer: {
+    marginBottom: 20,
+    backgroundColor: '#f8f9ff',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e3f2fd',
+  },
+  shiftsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  shiftItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    backgroundColor: 'white',
+    borderRadius: 6,
+    marginBottom: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2196F3',
+  },
+  shiftDateArea: {
+    flex: 1,
+  },
+  shiftDate: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  shiftArea: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 1,
+  },
+  shiftTime: {
+    fontSize: 12,
+    color: '#2196F3',
+    fontWeight: '500',
+  },
+  noShiftsText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
   signatureContainer: {
     marginBottom: 20,
   },
