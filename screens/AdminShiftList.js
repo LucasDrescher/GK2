@@ -470,12 +470,10 @@ export default function AdminShiftList({ route, navigation }) {
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
                     <Text style={globalStyles.dateTimeBtnIcon}>📅</Text>
-                    <View style={globalStyles.dateTimeBtnTextContainer}>
-                      <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
-                      <Text style={globalStyles.dateTimeBtnValue}>
-                        {formatDate(formData.date)}
-                      </Text>
-                    </View>
+                    <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
+                    <Text style={globalStyles.dateTimeBtnValue}>
+                      {formatDate(formData.date)}
+                    </Text>
                   </View>
                 </TouchableOpacity>
                 
@@ -486,7 +484,6 @@ export default function AdminShiftList({ route, navigation }) {
                       mode="date"
                       display={Platform.OS === 'ios' ? 'compact' : 'default'}
                       onChange={onDateChange}
-                      style={globalStyles.modernPicker}
                     />
                     {Platform.OS === 'ios' && (
                       <TouchableOpacity
@@ -500,81 +497,73 @@ export default function AdminShiftList({ route, navigation }) {
                 )}
               </View>
 
-              {/* Start tid vælger */}
-              <View style={globalStyles.dateTimeGroup}>
+              {/* Start og slut tid i samme række */}
+              <View style={globalStyles.timeRow}>
                 <TouchableOpacity
                   style={[globalStyles.modernDateTimeBtn, showStartTimePicker && globalStyles.modernDateTimeBtnActive]}
                   onPress={() => setShowStartTimePicker(!showStartTimePicker)}
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
                     <Text style={globalStyles.dateTimeBtnIcon}>🕐</Text>
-                    <View style={globalStyles.dateTimeBtnTextContainer}>
-                      <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
-                      <Text style={globalStyles.dateTimeBtnValue}>
-                        {formData.startTime || "Vælg tid"}
-                      </Text>
-                    </View>
+                    <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
+                    <Text style={globalStyles.dateTimeBtnValue}>
+                      {formData.startTime || "Vælg tid"}
+                    </Text>
                   </View>
                 </TouchableOpacity>
                 
-                {showStartTimePicker && (
-                  <View style={globalStyles.modernPickerContainer}>
-                    <DateTimePicker
-                      value={formData.startTime ? new Date(`2000-01-01T${formData.startTime}:00`) : new Date()}
-                      mode="time"
-                      display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                      onChange={onStartTimeChange}
-                      style={globalStyles.modernPicker}
-                    />
-                    {Platform.OS === 'ios' && (
-                      <TouchableOpacity
-                        style={globalStyles.modernPickerDoneBtn}
-                        onPress={() => setShowStartTimePicker(false)}
-                      >
-                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </View>
-
-              {/* Slut tid vælger */}
-              <View style={globalStyles.dateTimeGroup}>
                 <TouchableOpacity
                   style={[globalStyles.modernDateTimeBtn, showEndTimePicker && globalStyles.modernDateTimeBtnActive]}
                   onPress={() => setShowEndTimePicker(!showEndTimePicker)}
                 >
                   <View style={globalStyles.dateTimeBtnContent}>
                     <Text style={globalStyles.dateTimeBtnIcon}>🕕</Text>
-                    <View style={globalStyles.dateTimeBtnTextContainer}>
-                      <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
-                      <Text style={globalStyles.dateTimeBtnValue}>
-                        {formData.endTime || "Vælg tid"}
-                      </Text>
-                    </View>
+                    <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
+                    <Text style={globalStyles.dateTimeBtnValue}>
+                      {formData.endTime || "Vælg tid"}
+                    </Text>
                   </View>
                 </TouchableOpacity>
-                
-                {showEndTimePicker && (
-                  <View style={globalStyles.modernPickerContainer}>
-                    <DateTimePicker
-                      value={formData.endTime ? new Date(`2000-01-01T${formData.endTime}:00`) : new Date()}
-                      mode="time"
-                      display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                      onChange={onEndTimeChange}
-                      style={globalStyles.modernPicker}
-                    />
-                    {Platform.OS === 'ios' && (
-                      <TouchableOpacity
-                        style={globalStyles.modernPickerDoneBtn}
-                        onPress={() => setShowEndTimePicker(false)}
-                      >
-                        <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
               </View>
+              
+              {/* Time pickers */}
+              {showStartTimePicker && (
+                <View style={globalStyles.modernPickerContainer}>
+                  <DateTimePicker
+                    value={formData.startTime ? new Date(`2000-01-01T${formData.startTime}:00`) : new Date()}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    onChange={onStartTimeChange}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={globalStyles.modernPickerDoneBtn}
+                      onPress={() => setShowStartTimePicker(false)}
+                    >
+                      <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              
+              {showEndTimePicker && (
+                <View style={globalStyles.modernPickerContainer}>
+                  <DateTimePicker
+                    value={formData.endTime ? new Date(`2000-01-01T${formData.endTime}:00`) : new Date()}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    onChange={onEndTimeChange}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={globalStyles.modernPickerDoneBtn}
+                      onPress={() => setShowEndTimePicker(false)}
+                    >
+                      <Text style={globalStyles.modernPickerDoneBtnText}>✓ Færdig</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
             </View>
 
             <Text style={globalStyles.sectionTitle}>Tilknyt medarbejdere</Text>

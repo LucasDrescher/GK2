@@ -12,6 +12,7 @@ import ContractScreen from "./screens/ContractScreen";
 import AdminScreen from "./screens/AdminScreen";
 import EmployeeListScreen from "./screens/EmployeeListScreen";
 import SignedContractsScreen from "./screens/SignedContractsScreen";
+import AdminShiftList from "./screens/AdminShiftList";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -68,6 +69,12 @@ function AdminDrawer({ route }) {
         name="Admin"
         component={AdminScreen}
         options={{ title: "Godkend medarbejdere" }}
+        initialParams={{ companyCode }}
+      />
+      <Drawer.Screen
+        name="AdminShiftList"
+        component={AdminShiftList}
+        options={{ title: "Vagtplan (Admin)" }}
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
