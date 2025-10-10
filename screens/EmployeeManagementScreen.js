@@ -374,7 +374,7 @@ export default function EmployeeManagementScreen({ route }) {
                   style={[globalStyles.actionButton, globalStyles.deleteButton]}
                   onPress={() => handleDelete(selectedEmployee.id, `${selectedEmployee.firstName} ${selectedEmployee.lastName}`)}
                 >
-                  <Text style={globalStyles.actionButtonText}>🗑️ Fjern</Text>
+                  <Text style={globalStyles.actionButtonText}>Fjern</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
