@@ -4,7 +4,7 @@ import { rtdb } from "../database/firebase";
 import { ref, onValue, update } from "firebase/database";
 import { globalStyles } from "../styles";
 
-export default function AdminScreen({ route, navigation }) {
+export default function AdminScreen({ route }) {
   const { companyCode } = route.params;
   const [pendingEmployees, setPendingEmployees] = useState([]);
 
@@ -41,14 +41,6 @@ export default function AdminScreen({ route, navigation }) {
   return (
     <View style={globalStyles.container}>
       <Text style={globalStyles.title}>Medarbejdere til godkendelse</Text>
-
-      {/* Knappen til at se alle medarbejdere */}
-      <View style={{ marginBottom: 20 }}>
-        <Button
-          title="Se alle medarbejdere"
-          onPress={() => navigation.navigate("EmployeeListScreen", { companyCode })}
-        />
-      </View>
 
       {pendingEmployees.length === 0 ? (
         <Text>Ingen medarbejdere til godkendelse</Text>
