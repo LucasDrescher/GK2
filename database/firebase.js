@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-
+//GODK1 
 export const rtdb = getDatabase(
   firebaseApp,
   "https://godk1-f7c2a-default-rtdb.europe-west1.firebasedatabase.app/"

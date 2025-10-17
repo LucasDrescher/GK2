@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Text, TouchableOpacity, View, Image, ScrollView, Alert } from 'react-native';
+import { Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, useCameraPermissions, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { globalStyles } from '../styles';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -15,15 +15,6 @@ export default function CameraTest({ navigation, route }) {
   const [gallery, setGallery] = useState(false);
   const [zoom, setZoom] = useState(0);
   const cameraRef = useRef(null);
-  const isTaking = useRef(false);
-
-  // Compute a safe camera type prop without directly dereferencing Camera.Constants in JSX
-  const hasCameraConstants = typeof Camera !== 'undefined' && Camera && Camera.Constants && Camera.Constants.Type;
-  const typeProp = hasCameraConstants
-    ? (facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front)
-    : (typeof CameraType !== 'undefined' && CameraType
-      ? (facing === 'back' ? CameraType.back : CameraType.front)
-      : (facing === 'back' ? 'back' : 'front'));
 
   function toggleFacing() {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
@@ -31,10 +22,8 @@ export default function CameraTest({ navigation, route }) {
 
   async function snap() {
     if (!cameraRef.current) return;
-    if (isTaking.current) return;
-    isTaking.current = true;
-    setLoading(true);
     try {
+      setLoading(true);
       const result = await cameraRef.current.takePictureAsync();
       setImagesArr((prev) => [...prev, result]);
 
@@ -42,17 +31,11 @@ export default function CameraTest({ navigation, route }) {
       if (targetField) {
         // prefer explicit passportUri for compatibility, otherwise use the dynamic field
         const params = targetField === 'passportUri' ? { passportUri: result.uri } : { [targetField]: result.uri };
-        // Update the existing Register route with the new params
-        navigation.navigate({ name: 'Register', params, merge: true });
-        // Then pop Camera from the stack so the back button won't return to Camera
-        // small timeout to ensure navigation events settle
-        setTimeout(() => navigation.goBack(), 50);
+        navigation.navigate('Register', params);
       }
     } catch (err) {
       console.log('Snap error:', err);
-      Alert.alert('Fejl', 'Kunne ikke tage billede. Prøv igen.');
     } finally {
-      isTaking.current = false;
       setLoading(false);
     }
   }
@@ -101,21 +84,12 @@ export default function CameraTest({ navigation, route }) {
   return (
     <SafeAreaView style={[globalStyles.container, { padding: 0 }]}> 
       <View style={{ flex: 1, position: 'relative', backgroundColor: 'black' }}>
-        {Camera ? (
-          <Camera
-            ref={(r) => (cameraRef.current = r)}
-            style={{ flex: 1, width: '100%' }}
-            type={typeProp}
-            zoom={zoom}
-          />
-        ) : (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-            <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>Kamera-modulet er ikke tilgængeligt i denne build.</Text>
-            <TouchableOpacity onPress={() => { if (requestPermission) requestPermission(); }} style={{ padding: 10 }}>
-              <Text style={{ color: '#0af' }}>Prøv at give kamera-adgang / genstart app</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <CameraView
+          ref={cameraRef}
+          style={{ flex: 1, width: '100%' }}
+          facing={facing}
+          zoom={zoom}
+        />
 
         {/* Overlay controls (absolutely positioned so CameraView has no children) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }} pointerEvents="box-none">
@@ -132,7 +106,7 @@ export default function CameraTest({ navigation, route }) {
               <Ionicons name="camera-reverse-outline" size={34} color="#fff" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={async () => { if (!loading) await snap(); }} disabled={loading} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: loading ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+            <TouchableOpacity onPress={snap} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
               <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' }} />
             </TouchableOpacity>
 
