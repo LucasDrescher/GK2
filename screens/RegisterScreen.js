@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Platform, Modal, Pressable, Vibration } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Platform, Modal, Pressable, Vibration, Image, TouchableOpacity } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CountryPicker from 'react-native-country-picker-modal';
 import {
@@ -17,7 +17,7 @@ import { rtdb } from "../database/firebase";
 import { ref, set, get, child } from "firebase/database";
 import { globalStyles } from "../styles";
 
-export default function RegisterScreen({ navigation }) {
+export default function RegisterScreen({ navigation, route }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -30,6 +30,7 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [companyCode, setCompanyCode] = useState("");
+  const [passportUri, setPassportUri] = useState(null);
 
   const handleRegister = () => {
     if (!firstName || !lastName || !birthday || !address || !country || !email || !password || !companyCode) {
@@ -57,6 +58,7 @@ export default function RegisterScreen({ navigation }) {
           country,
           email,
           password, // gem password
+          passportUri: passportUri || null,
           companyCode,
           companyName,
           role: "employee",
@@ -73,6 +75,12 @@ export default function RegisterScreen({ navigation }) {
       })
       .catch((error) => Alert.alert("Fejl", error.message));
   };
+
+  // Listen for passportUri being passed back from Camera
+  useEffect(() => {
+    const p = route?.params?.passportUri;
+    if (p) setPassportUri(p);
+  }, [route?.params?.passportUri]);
 
   return (
     <SafeAreaProvider>
@@ -249,6 +257,21 @@ export default function RegisterScreen({ navigation }) {
               autoCapitalize="none"
               returnKeyType="done"
             />
+
+            <Text>Pas:</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title={passportUri ? 'Ret pas' : 'Upload pas'}
+                  onPress={() => navigation.navigate('Camera', { targetField: 'passportUri' })}
+                />
+              </View>
+              {passportUri ? (
+                <TouchableOpacity onPress={() => navigation.navigate('Image', { image: passportUri })}>
+                  <Image source={{ uri: passportUri }} style={{ width: 64, height: 44, borderRadius: 6 }} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
 
             <View style={globalStyles.button}>
               <Button title="Register" onPress={handleRegister} />
