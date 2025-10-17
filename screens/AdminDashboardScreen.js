@@ -17,7 +17,11 @@ import { globalStyles } from "../styles";
 const { width, height } = Dimensions.get("window");
 
 export default function AdminDashboardScreen({ route, navigation }) {
-  const { companyCode } = route.params;
+  // Defensive access: route or params might be undefined in some navigation flows
+  const companyCode = route?.params?.companyCode || null;
+
+  // Helpful debug log (visible in Expo logs) to verify the passed companyCode
+  console.log('AdminDashboard companyCode:', companyCode);
 
   // State management
   const [shifts, setShifts] = useState({});
@@ -27,7 +31,11 @@ export default function AdminDashboardScreen({ route, navigation }) {
 
   // Firebase data listeners
   useEffect(() => {
-    if (!companyCode) return;
+    if (!companyCode) {
+      // No companyCode available - avoid stuck loading state
+      setLoading(false);
+      return;
+    }
 
     const shiftsRef = ref(rtdb, `companies/${companyCode}/shifts`);
     const unsubscribeShifts = onValue(shiftsRef, (snapshot) => {
@@ -54,6 +62,15 @@ export default function AdminDashboardScreen({ route, navigation }) {
       unsubscribeShifts();
       unsubscribeEmployees();
     };
+  }, [companyCode]);
+
+  // Fallback: if database listeners somehow don't fire, clear loading after 5s
+  useEffect(() => {
+    if (!companyCode) return; // handled above
+    const t = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+    return () => clearTimeout(t);
   }, [companyCode]);
 
   // Events listener for dashboard preview
