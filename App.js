@@ -12,6 +12,8 @@ import ContractScreen from "./screens/ContractScreen";
 import AdminScreen from "./screens/AdminScreen";
 import EmployeeManagementScreen from "./screens/EmployeeManagementScreen";
 import AdminShiftList from "./screens/AdminShiftList";
+import CameraTest from "./screens/Camera";
+import ImageScreen from "./screens/Pictureview";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -97,6 +99,8 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
+  <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Kamera" }} />
+  <Stack.Screen name="Image" component={ImageScreen} options={{ title: "Billede" }} />
   <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
         <Stack.Screen name="EmployeeHome" component={EmployeeDrawer} options={{ headerShown: false }} />
         <Stack.Screen name="AdminHome" component={AdminDrawer} options={{ headerShown: false }} />
