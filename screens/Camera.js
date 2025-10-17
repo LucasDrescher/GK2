@@ -15,6 +15,7 @@ export default function CameraTest({ navigation, route }) {
   const [gallery, setGallery] = useState(false);
   const [zoom, setZoom] = useState(0);
   const cameraRef = useRef(null);
+  const isTaking = useRef(false);
 
   function toggleFacing() {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
@@ -22,8 +23,10 @@ export default function CameraTest({ navigation, route }) {
 
   async function snap() {
     if (!cameraRef.current) return;
+    if (isTaking.current) return;
+    isTaking.current = true;
+    setLoading(true);
     try {
-      setLoading(true);
       const result = await cameraRef.current.takePictureAsync();
       setImagesArr((prev) => [...prev, result]);
 
@@ -34,11 +37,14 @@ export default function CameraTest({ navigation, route }) {
         // Update the existing Register route with the new params
         navigation.navigate({ name: 'Register', params, merge: true });
         // Then pop Camera from the stack so the back button won't return to Camera
-        navigation.goBack();
+        // small timeout to ensure navigation events settle
+        setTimeout(() => navigation.goBack(), 50);
       }
     } catch (err) {
       console.log('Snap error:', err);
+      Alert.alert('Fejl', 'Kunne ikke tage billede. Prøv igen.');
     } finally {
+      isTaking.current = false;
       setLoading(false);
     }
   }
