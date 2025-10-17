@@ -17,6 +17,14 @@ export default function CameraTest({ navigation, route }) {
   const cameraRef = useRef(null);
   const isTaking = useRef(false);
 
+  // Compute a safe camera type prop without directly dereferencing Camera.Constants in JSX
+  const hasCameraConstants = typeof Camera !== 'undefined' && Camera && Camera.Constants && Camera.Constants.Type;
+  const typeProp = hasCameraConstants
+    ? (facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front)
+    : (typeof CameraType !== 'undefined' && CameraType
+      ? (facing === 'back' ? CameraType.back : CameraType.front)
+      : (facing === 'back' ? 'back' : 'front'));
+
   function toggleFacing() {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
   }
@@ -97,11 +105,7 @@ export default function CameraTest({ navigation, route }) {
           <Camera
             ref={(r) => (cameraRef.current = r)}
             style={{ flex: 1, width: '100%' }}
-            type={
-              (Camera.Constants && Camera.Constants.Type)
-                ? (facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front)
-                : (CameraType ? (facing === 'back' ? CameraType.back : CameraType.front) : (facing === 'back' ? 'back' : 'front'))
-            }
+            type={typeProp}
             zoom={zoom}
           />
         ) : (
