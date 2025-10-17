@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, View, Image, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraPermissions, CameraType } from 'expo-camera';
 import { globalStyles } from '../styles';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -93,12 +93,25 @@ export default function CameraTest({ navigation, route }) {
   return (
     <SafeAreaView style={[globalStyles.container, { padding: 0 }]}> 
       <View style={{ flex: 1, position: 'relative', backgroundColor: 'black' }}>
-        <Camera
-          ref={cameraRef}
-          style={{ flex: 1, width: '100%' }}
-          type={facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front}
-          zoom={zoom}
-        />
+        {Camera ? (
+          <Camera
+            ref={(r) => (cameraRef.current = r)}
+            style={{ flex: 1, width: '100%' }}
+            type={
+              (Camera.Constants && Camera.Constants.Type)
+                ? (facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front)
+                : (CameraType ? (facing === 'back' ? CameraType.back : CameraType.front) : (facing === 'back' ? 'back' : 'front'))
+            }
+            zoom={zoom}
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Text style={{ color: '#fff', marginBottom: 12, textAlign: 'center' }}>Kamera-modulet er ikke tilgængeligt i denne build.</Text>
+            <TouchableOpacity onPress={() => { if (requestPermission) requestPermission(); }} style={{ padding: 10 }}>
+              <Text style={{ color: '#0af' }}>Prøv at give kamera-adgang / genstart app</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Overlay controls (absolutely positioned so CameraView has no children) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }} pointerEvents="box-none">
