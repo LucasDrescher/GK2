@@ -31,7 +31,10 @@ export default function CameraTest({ navigation, route }) {
       if (targetField) {
         // prefer explicit passportUri for compatibility, otherwise use the dynamic field
         const params = targetField === 'passportUri' ? { passportUri: result.uri } : { [targetField]: result.uri };
-        navigation.navigate('Register', params);
+        // Update the existing Register route with the new params
+        navigation.navigate({ name: 'Register', params, merge: true });
+        // Then pop Camera from the stack so the back button won't return to Camera
+        navigation.goBack();
       }
     } catch (err) {
       console.log('Snap error:', err);
