@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import GlobalStyle from '../style/GlobalStyle';
+import { globalStyles } from '../styles';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function CameraTest({ navigation, route }) {
@@ -48,8 +48,8 @@ export default function CameraTest({ navigation, route }) {
   function zoomOut() { setZoom((prev) => (prev - 0.1 >= 0 ? prev - 0.1 : 0)); }
 
   const CameraGallery = () => (
-    <View style={GlobalStyle.gallery}>
-      <Text style={GlobalStyle.text}>Billeder taget: {imagesArr.length}</Text>
+    <View style={{ padding: 10 }}>
+      <Text style={globalStyles.itemText}>Billeder taget: {imagesArr.length}</Text>
       <ScrollView horizontal>
         {imagesArr.length > 0 ? (
           imagesArr.map((image, index) => (
@@ -82,33 +82,33 @@ export default function CameraTest({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={GlobalStyle.safeview}>
-      <View style={GlobalStyle.container}>
+    <SafeAreaView style={globalStyles.container}>
+      <View style={globalStyles.container}>
         <CameraView
           ref={cameraRef}
           style={GlobalStyle.camera}
           facing={facing}
           zoom={zoom}
         >
-          <View style={GlobalStyle.buttonContainer}>
-            <TouchableOpacity style={GlobalStyle.btn} onPress={toggleFacing}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
+            <TouchableOpacity style={{ padding: 10 }} onPress={toggleFacing}>
               <Ionicons name="camera-reverse-outline" size={32} color="#fff" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={GlobalStyle.snapbtn} onPress={snap}>
-              <Text style={{ color: 'white' }}>{loading ? '...' : ''}</Text>
+            <TouchableOpacity onPress={snap} style={{ padding: 10, alignItems: 'center' }}>
+              <Text style={{ color: 'white' }}>{loading ? '...' : 'Snap'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={GlobalStyle.btn} onPress={toggleGallery}>
+            <TouchableOpacity style={{ padding: 10 }} onPress={toggleGallery}>
               <Ionicons name="images-outline" size={32} color="#fff" />
             </TouchableOpacity>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', padding: 16 }}>
-            <TouchableOpacity style={GlobalStyle.btn} onPress={zoomOut}>
+            <TouchableOpacity onPress={zoomOut} style={{ padding: 8 }}>
               <Ionicons name="remove-outline" size={32} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={GlobalStyle.btn} onPress={zoomIn}>
+            <TouchableOpacity onPress={zoomIn} style={{ padding: 8 }}>
               <Ionicons name="add-outline" size={32} color="#fff" />
             </TouchableOpacity>
           </View>
