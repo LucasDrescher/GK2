@@ -82,37 +82,44 @@ export default function CameraTest({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={globalStyles.container}>
-      <View style={globalStyles.container}>
+    <SafeAreaView style={[globalStyles.container, { padding: 0 }]}> 
+      <View style={{ flex: 1, position: 'relative', backgroundColor: 'black' }}>
         <CameraView
           ref={cameraRef}
-          style={{ flex: 1, width: '100%', backgroundColor: 'black' }}
+          style={{ flex: 1, width: '100%' }}
           facing={facing}
           zoom={zoom}
-        >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
-            <TouchableOpacity style={{ padding: 10 }} onPress={toggleFacing}>
-              <Ionicons name="camera-reverse-outline" size={32} color="#fff" />
-            </TouchableOpacity>
+        />
 
-            <TouchableOpacity onPress={snap} style={{ padding: 10, alignItems: 'center' }}>
-              <Text style={{ color: 'white' }}>{loading ? '...' : 'Snap'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={{ padding: 10 }} onPress={toggleGallery}>
-              <Ionicons name="images-outline" size={32} color="#fff" />
+        {/* Overlay controls (absolutely positioned so CameraView has no children) */}
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }} pointerEvents="box-none">
+          {/* Top row - gallery toggle */}
+          <View style={{ alignItems: 'flex-end', padding: 16 }} pointerEvents="auto">
+            <TouchableOpacity onPress={toggleGallery} style={{ padding: 8 }}>
+              <Ionicons name="images-outline" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', padding: 16 }}>
-            <TouchableOpacity onPress={zoomOut} style={{ padding: 8 }}>
-              <Ionicons name="remove-outline" size={32} color="#fff" />
+          {/* Bottom controls */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: 20 }} pointerEvents="auto">
+            <TouchableOpacity onPress={toggleFacing} style={{ padding: 12 }}>
+              <Ionicons name="camera-reverse-outline" size={34} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={zoomIn} style={{ padding: 8 }}>
-              <Ionicons name="add-outline" size={32} color="#fff" />
+
+            <TouchableOpacity onPress={snap} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' }} />
             </TouchableOpacity>
+
+            <View style={{ alignItems: 'center' }}>
+              <TouchableOpacity onPress={zoomIn} style={{ padding: 8 }}>
+                <Ionicons name="add-outline" size={30} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={zoomOut} style={{ padding: 8 }}>
+                <Ionicons name="remove-outline" size={30} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </CameraView>
+        </View>
 
         {gallery ? <CameraGallery /> : null}
       </View>
