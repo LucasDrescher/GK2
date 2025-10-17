@@ -21,43 +21,61 @@ export default function AdminRegisterScreen({ navigation }) {
   const [adminPassword, setAdminPassword] = useState("");
 
   const handleRegister = async () => {
+    // Basic validation
     if (!companyName || !companyCode || !adminEmail || !adminPassword) {
       Alert.alert("Fejl", "Udfyld alle felter!");
       return;
     }
 
-    // Tjek om virksomhedskode allerede findes
-    const dbRef = ref(rtdb);
-    const companySnap = await get(child(dbRef, `companies/${companyCode}`));
-    if (companySnap.exists()) {
-      Alert.alert("Fejl", "Virksomhedskoden er allerede i brug!");
+    // Firebase keys cannot contain . # $ [ ]
+    const forbidden = /[.#$\[\]]/;
+    if (forbidden.test(companyCode)) {
+      Alert.alert("Fejl", "Virksomhedskode må ikke indeholde . # $ [ eller ] — vælg en anden kode.");
       return;
     }
 
-    // Opret virksomhed
-    await set(ref(rtdb, `companies/${companyCode}`), {
-      name: companyName,
-      code: companyCode,
-    });
+    try {
+      console.log('AdminRegister: checking companyCode=', companyCode);
+      // Tjek om virksomhedskode allerede findes
+      const dbRef = ref(rtdb);
+      const companySnap = await get(child(dbRef, `companies/${companyCode}`));
+      if (companySnap.exists()) {
+        console.log('AdminRegister: company exists for code', companyCode);
+        Alert.alert("Fejl", "Virksomhedskoden er allerede i brug!");
+        return;
+      }
 
-    // Opret admin-bruger (nu under admins)
-    const adminId = Date.now();
-    await set(ref(rtdb, `companies/${companyCode}/admins/${adminId}`), {
-      firstName: "Admin",
-      lastName: "Bruger",
-      email: adminEmail,
-      password: adminPassword,
-      companyCode,
-      companyName,
-      role: "admin",
-      approved: true,
-    });
+      // Opret virksomhed
+      console.log('AdminRegister: creating company', companyCode);
+      await set(ref(rtdb, `companies/${companyCode}`), {
+        name: companyName,
+        code: companyCode,
+      });
 
-    Alert.alert(
-      "Succes",
-      "Virksomhed og admin oprettet! Du kan nu logge ind som admin.",
-      [{ text: "OK", onPress: () => navigation.navigate("Login") }]
-    );
+      // Opret admin-bruger (nu under admins)
+      const adminId = Date.now();
+      console.log('AdminRegister: creating admin', adminId);
+      await set(ref(rtdb, `companies/${companyCode}/admins/${adminId}`), {
+        firstName: "Admin",
+        lastName: "Bruger",
+        email: adminEmail,
+        password: adminPassword,
+        companyCode,
+        companyName,
+        role: "admin",
+        approved: true,
+      });
+
+      console.log('AdminRegister: success for', companyCode);
+      Alert.alert(
+        "Succes",
+        "Virksomhed og admin oprettet! Du kan nu logge ind som admin.",
+        [{ text: "OK", onPress: () => navigation.navigate("Login") }]
+      );
+    } catch (err) {
+      console.error('AdminRegister error:', err);
+      Alert.alert('Fejl', err?.message || String(err));
+    }
   };
 
   return (
