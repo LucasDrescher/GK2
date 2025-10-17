@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { globalStyles } from '../styles';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -87,10 +87,10 @@ export default function CameraTest({ navigation, route }) {
   return (
     <SafeAreaView style={[globalStyles.container, { padding: 0 }]}> 
       <View style={{ flex: 1, position: 'relative', backgroundColor: 'black' }}>
-        <CameraView
+        <Camera
           ref={cameraRef}
           style={{ flex: 1, width: '100%' }}
-          facing={facing}
+          type={facing === 'back' ? Camera.Constants.Type.back : Camera.Constants.Type.front}
           zoom={zoom}
         />
 
@@ -109,7 +109,7 @@ export default function CameraTest({ navigation, route }) {
               <Ionicons name="camera-reverse-outline" size={34} color="#fff" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={snap} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+            <TouchableOpacity onPress={async () => { if (!loading) await snap(); }} disabled={loading} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: loading ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
               <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' }} />
             </TouchableOpacity>
 
