@@ -61,7 +61,7 @@ export default function CameraTest({ navigation, route }) {
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={GlobalStyle.text}>No images taken</Text>
+          <Text style={globalStyles.itemText}>No images taken</Text>
         )}
       </ScrollView>
     </View>
@@ -86,7 +86,7 @@ export default function CameraTest({ navigation, route }) {
       <View style={globalStyles.container}>
         <CameraView
           ref={cameraRef}
-          style={GlobalStyle.camera}
+          style={{ flex: 1, width: '100%', backgroundColor: 'black' }}
           facing={facing}
           zoom={zoom}
         >
