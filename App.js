@@ -12,9 +12,8 @@ import ContractScreen from "./screens/ContractScreen";
 import AdminScreen from "./screens/AdminScreen";
 import EmployeeManagementScreen from "./screens/EmployeeManagementScreen";
 import AdminShiftList from "./screens/AdminShiftList";
-import AdminDashboardScreen from "./screens/AdminDashboardScreen";
-import AdminCreateEventScreen from "./screens/AdminCreateEventScreen";
-import AdminEventListScreen from "./screens/AdminEventListScreen";
+import CameraTest from "./screens/Camera";
+import ImageScreen from "./screens/Pictureview";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -66,13 +65,7 @@ function AdminDrawer({ route }) {
   const { companyCode } = route.params;
 
   return (
-    <Drawer.Navigator initialRouteName="AdminDashboard" screenOptions={{ swipeEnabled: false }}>
-      <Drawer.Screen
-        name="AdminDashboard"
-        component={AdminDashboardScreen}
-        options={{ title: "Dashboard" }}
-        initialParams={{ companyCode }}
-      />
+    <Drawer.Navigator initialRouteName="Admin" screenOptions={{ swipeEnabled: false }}>
       <Drawer.Screen
         name="Admin"
         component={AdminScreen}
@@ -92,18 +85,6 @@ function AdminDrawer({ route }) {
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
-        name="CreateEvent"
-        component={AdminCreateEventScreen}
-        options={{ title: "Opret event" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="Events"
-        component={AdminEventListScreen}
-        options={{ title: "Events" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
         name="Logout"
         component={LogoutScreen}
         options={{ title: "Log ud" }}
@@ -118,10 +99,11 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
   <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
+  <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Kamera" }} />
+  <Stack.Screen name="Image" component={ImageScreen} options={{ title: "Billede" }} />
   <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
         <Stack.Screen name="EmployeeHome" component={EmployeeDrawer} options={{ headerShown: false }} />
         <Stack.Screen name="AdminHome" component={AdminDrawer} options={{ headerShown: false }} />
-        <Stack.Screen name="EditEvent" component={AdminCreateEventScreen} options={{ title: 'Rediger event' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

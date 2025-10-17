@@ -1,7 +1,6 @@
 // database/firebase.js
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getStorage } from "firebase/storage";
 
 
 const firebaseConfig = {
@@ -17,10 +16,8 @@ const firebaseConfig = {
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-
+//GODK1 
 export const rtdb = getDatabase(
   firebaseApp,
   "https://godk1-f7c2a-default-rtdb.europe-west1.firebasedatabase.app/"
 );
-
-export const storage = getStorage(firebaseApp);
