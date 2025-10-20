@@ -89,6 +89,12 @@ function AdminDrawer({ route }) {
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
+        name="EditEvent"
+        component={AdminCreateEventScreen}
+        options={{ title: "Rediger event" }}
+        initialParams={{ companyCode }}
+      />
+      <Drawer.Screen
         name="AdminEventList"
         component={AdminEventListScreen}
         options={{ title: "Events" }}
