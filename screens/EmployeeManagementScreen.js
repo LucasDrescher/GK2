@@ -252,14 +252,14 @@ export default function EmployeeManagementScreen({ route }) {
   const FilterButton = ({ title, filterKey, count }) => (
     <TouchableOpacity
       style={[
-        styles.filterButton, // Base styling
-        selectedFilter === filterKey && styles.filterButtonActive // Aktiv styling hvis valgt
+        globalStyles.filterButton, // Base styling
+        selectedFilter === filterKey && globalStyles.filterButtonActive // Aktiv styling hvis valgt
       ]}
       onPress={() => setSelectedFilter(filterKey)} // Skifter filter når trykket
     >
       <Text style={[
-        styles.filterButtonText,
-        selectedFilter === filterKey && styles.filterButtonTextActive // Aktiv tekst styling
+        globalStyles.filterButtonText,
+        selectedFilter === filterKey && globalStyles.filterButtonTextActive // Aktiv tekst styling
       ]}>
         {title} ({count}) {/* Viser filter navn og antal */}
       </Text>
