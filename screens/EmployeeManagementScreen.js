@@ -174,13 +174,17 @@ export default function EmployeeManagementScreen({ route }) {
 
   // Funktion til at godkende en medarbejder
   const handleApprove = (id) => {
+    // Lukker modal først for at undgå state konflikter
+    setModalVisible(false);
+    setSelectedEmployee(null);
+    
     // Opdaterer medarbejderens approved status i Firebase
     update(ref(rtdb, `companies/${companyCode}/employees/` + id), { approved: true })
       .then(() => {
-        // Success callback - viser bekræftelse og lukker modal
-        Alert.alert("Succes", "Medarbejder godkendt!");
-        setModalVisible(false);    // Lukker modal
-        setSelectedEmployee(null); // Nulstiller valgt medarbejder
+        // Success callback - viser bekræftelse efter kort delay
+        setTimeout(() => {
+          Alert.alert("Succes", "Medarbejder godkendt!");
+        }, 100);
       })
       .catch((err) => Alert.alert("Fejl", err.message)); // Error handling
   };
@@ -197,13 +201,17 @@ export default function EmployeeManagementScreen({ route }) {
           text: "Afvis", 
           style: "destructive", // Rød farve for farlig handling
           onPress: () => {
+            // Lukker modal først for at undgå state konflikter
+            setModalVisible(false);
+            setSelectedEmployee(null);
+            
             // Sætter approved status til "rejected" i Firebase
             update(ref(rtdb, `companies/${companyCode}/employees/` + id), { approved: "rejected" })
               .then(() => {
-                // Success callback - bekræfter afvisning og lukker modal
-                Alert.alert("Info", "Medarbejder afvist.");
-                setModalVisible(false);    // Lukker detail modal
-                setSelectedEmployee(null); // Nulstiller valgt medarbejder
+                // Success callback - viser bekræftelse efter kort delay
+                setTimeout(() => {
+                  Alert.alert("Info", "Medarbejder afvist.");
+                }, 100);
               })
               .catch((err) => Alert.alert("Fejl", err.message)); // Error handling
           }
@@ -393,6 +401,24 @@ export default function EmployeeManagementScreen({ route }) {
                   );
                 }
               })()}
+
+              {selectedEmployee.passportUri && (
+                <View style={globalStyles.signatureContainer}>
+                  <Text style={globalStyles.signatureTitle}>Pas:</Text>
+                  <TouchableOpacity onPress={() => {
+                    // Kunne evt. åbne billedet i fuld størrelse
+                    Alert.alert('Pas billede', 'Tryk på billedet for at se det i fuld størrelse', [
+                      { text: 'OK' }
+                    ]);
+                  }}>
+                    <Image
+                      source={{ uri: selectedEmployee.passportUri }}
+                      style={globalStyles.signatureImage}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {selectedEmployee.signature && (
                 <View style={globalStyles.signatureContainer}>

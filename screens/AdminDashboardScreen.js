@@ -232,9 +232,9 @@ export default function AdminDashboardScreen({ route, navigation }) {
                   style={[globalStyles.weekShiftCard, { width: Math.min(320, width - 40), marginLeft: 16 }]}
                   onPress={() => navigation.navigate('EditEvent', { companyCode, event: ev, eventId: ev.id })}
                 >
-                  <Text style={globalStyles.weekShiftTime}>{ev.startTime ? ev.startTime : ''} {ev.endTime ? ' - ' + ev.endTime : ''}</Text>
+                  <Text style={globalStyles.weekShiftTime}>{ev.startTime || ''}{ev.endTime ? ` - ${ev.endTime}` : ''}</Text>
                   <Text style={globalStyles.weekShiftArea}>{ev.title}</Text>
-                  <Text style={globalStyles.weekShiftEmployees}>{ev.date} {ev.location ? '• ' + ev.location : ''}</Text>
+                  <Text style={globalStyles.weekShiftEmployees}>{ev.date}{ev.location ? ` • ${ev.location}` : ''}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -260,7 +260,7 @@ export default function AdminDashboardScreen({ route, navigation }) {
             >
               <View style={globalStyles.shiftDetails}>
                 <Text style={globalStyles.shiftArea}>{ev.title}</Text>
-                <Text style={globalStyles.shiftContact}>{ev.date} {ev.startTime ? '• ' + ev.startTime : ''}</Text>
+                <Text style={globalStyles.shiftContact}>{ev.date}{ev.startTime ? ` • ${ev.startTime}` : ''}</Text>
                 {ev.location ? <Text style={globalStyles.shiftEmployees}>{ev.location}</Text> : null}
               </View>
             </TouchableOpacity>

@@ -27,11 +27,16 @@ export default function CameraTest({ navigation, route }) {
       const result = await cameraRef.current.takePictureAsync();
       setImagesArr((prev) => [...prev, result]);
 
-      // send seneste billede tilbage til Register via params
+      // Gem billede URI og gå tilbage til Register
       if (targetField) {
-        // prefer explicit passportUri for compatibility, otherwise use the dynamic field
-        const params = targetField === 'passportUri' ? { passportUri: result.uri } : { [targetField]: result.uri };
-        navigation.navigate('Register', params);
+        const imageUri = result.uri;
+        
+        // Simpel løsning: Gem URI midlertidigt og lad Register hente den
+        // Dette er den mest pålidelige måde at bevare form state
+        global.tempPassportUri = imageUri;
+        
+        // Gå tilbage til forrige screen (Register)
+        navigation.goBack();
       }
     } catch (err) {
       console.log('Snap error:', err);

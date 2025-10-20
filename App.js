@@ -153,7 +153,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
-        <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Kamera" }} />
+        <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Tag billede" }} />
         <Stack.Screen name="Image" component={ImageScreen} options={{ title: "Billede" }} />
         <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
         <Stack.Screen name="EmployeeHome" component={EmployeeTabs} options={{ headerShown: false }} />

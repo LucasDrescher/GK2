@@ -1041,4 +1041,77 @@ export const globalStyles = StyleSheet.create({
     width: '100%',
     height: 200,
   },
+
+  // ShiftListScreen (medarbejder vagtoversigt) styles
+  // Employee shift card styles (for ShiftListScreen)
+  employeeShiftCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: "#007AFF",
+  },
+  shiftCardPast: {
+    opacity: 0.6,
+    borderLeftColor: "#999",
+  },
+  shiftCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
+  },
+  shiftCardDate: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#007AFF",
+  },
+  pastBadge: {
+    backgroundColor: "#999",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  pastBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  shiftCardBody: {
+    gap: 12,
+  },
+  shiftCardRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  shiftCardLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#555",
+    width: 80,
+  },
+  shiftCardValue: {
+    fontSize: 15,
+    color: "#222",
+    flex: 1,
+    fontWeight: "500",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 32,
+  },
 });

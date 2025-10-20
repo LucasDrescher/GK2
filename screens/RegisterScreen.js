@@ -39,18 +39,20 @@ export default function RegisterScreen({ navigation, route }) {
     }
 
     const userId = Date.now();
+    const trimmedCompanyCode = companyCode.trim(); // Trim whitespace
 
     const companyRef = ref(rtdb);
-    get(child(companyRef, `companies/${companyCode}`))
+    get(child(companyRef, `companies/${trimmedCompanyCode}`))
       .then((snapshot) => {
         if (!snapshot.exists()) {
-          Alert.alert("Fejl", "Virksomhedskoden findes ikke!");
+          Alert.alert("Fejl", `Virksomhedskoden "${trimmedCompanyCode}" findes ikke i databasen!`);
           return;
         }
 
-        const companyName = snapshot.val().name;
+        const companyData = snapshot.val();
+        const companyName = companyData?.name || "Unavngivet virksomhed";
 
-        set(ref(rtdb, `companies/${companyCode}/employees/${userId}`), {
+        set(ref(rtdb, `companies/${trimmedCompanyCode}/employees/${userId}`), {
           firstName,
           lastName,
           birthday,
@@ -59,7 +61,7 @@ export default function RegisterScreen({ navigation, route }) {
           email,
           password, // gem password
           passportUri: passportUri || null,
-          companyCode,
+          companyCode: trimmedCompanyCode,
           companyName,
           role: "employee",
           approved: false,
@@ -81,6 +83,17 @@ export default function RegisterScreen({ navigation, route }) {
     const p = route?.params?.passportUri;
     if (p) setPassportUri(p);
   }, [route?.params?.passportUri]);
+
+  // Lyt efter global temp URI når man kommer tilbage fra Camera
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (global.tempPassportUri) {
+        setPassportUri(global.tempPassportUri);
+        global.tempPassportUri = null; // Ryd op
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <SafeAreaProvider>
@@ -121,73 +134,47 @@ export default function RegisterScreen({ navigation, route }) {
               <Text
                 style={[globalStyles.input, { paddingVertical: 14, color: birthday ? '#000' : '#888' }]}
               >
-                {birthday
-                  ? (() => {
-                      const [y, m, d] = birthday.split('-');
-                      if (y && m && d) {
-                        const date = new Date(Number(y), Number(m) - 1, Number(d));
-                        return `${d}. ${date.toLocaleString('da-DK', { month: 'long' })} ${y}`;
-                      }
-                      return birthday;
-                    })()
-                  : 'Vælg fødselsdag'}
+                {birthday || 'Vælg fødselsdag'}
               </Text>
             </Pressable>
             {showDatePicker && (
-              Platform.OS === 'ios' ? (
-                <Modal
-                  transparent
-                  animationType="slide"
-                  visible={showDatePicker}
-                  onRequestClose={() => setShowDatePicker(false)}
-                >
-                  <View style={globalStyles.modalBackdrop}>
-                      <View style={globalStyles.modalCard}>
-                        <View style={globalStyles.modalPickerContainer}>
-                        <DateTimePicker
-                          value={birthday && birthday.match(/^\d{4}-\d{2}-\d{2}$/)
-                            ? new Date(birthday)
-                            : new Date(2000, 0, 1)}
-                          mode="date"
-                          display="spinner"
-                          textColor="#000"
-                          onChange={(event, selectedDate) => {
-                            if (selectedDate) {
-                              const d = selectedDate;
-                              const year = d.getFullYear();
-                              const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                              const day = d.getDate().toString().padStart(2, '0');
-                              setBirthday(`${year}-${month}-${day}`);
-                            }
-                          }}
-                          maximumDate={new Date()}
-                          style={globalStyles.fullWidth}
-                        />
-                      </View>
-                      <Button title="OK" onPress={() => setShowDatePicker(false)} />
+              <Modal
+                transparent
+                animationType="slide"
+                visible={showDatePicker}
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={globalStyles.modalBackdrop}>
+                  <View style={globalStyles.modalCard}>
+                    <View style={globalStyles.modalPickerContainer}>
+                      <DateTimePicker
+                        value={birthday && birthday.match(/^\d{4}-\d{2}-\d{2}$/)
+                          ? new Date(birthday)
+                          : new Date(2000, 0, 1)}
+                        mode="date"
+                        display="spinner"
+                        textColor="#000"
+                        locale="da-DK"
+                        onChange={(event, selectedDate) => {
+                          if (selectedDate) {
+                            const day = selectedDate.getDate();
+                            const monthNames = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 
+                                                'juli', 'august', 'september', 'oktober', 'november', 'december'];
+                            const month = monthNames[selectedDate.getMonth()];
+                            const year = selectedDate.getFullYear();
+                            
+                            // Format: "6/marts/2002"
+                            setBirthday(`${day}/${month}/${year}`);
+                          }
+                        }}
+                        maximumDate={new Date()}
+                        style={globalStyles.fullWidth}
+                      />
                     </View>
+                    <Button title="OK" onPress={() => setShowDatePicker(false)} />
                   </View>
-                </Modal>
-              ) : (
-                <DateTimePicker
-                  value={birthday && birthday.match(/^\d{4}-\d{2}-\d{2}$/)
-                    ? new Date(birthday)
-                    : new Date(2000, 0, 1)}
-                  mode="date"
-                  display="spinner"
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker(false);
-                    if (selectedDate) {
-                      const d = selectedDate;
-                      const year = d.getFullYear();
-                      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                      const day = d.getDate().toString().padStart(2, '0');
-                      setBirthday(`${year}-${month}-${day}`);
-                    }
-                  }}
-                  maximumDate={new Date()}
-                />
-              )
+                </View>
+              </Modal>
             )}
 
             <Text>Adresse:</Text>

@@ -26,9 +26,9 @@ export default function AdminCreateEventScreen({ route, navigation }) {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [startTime, setStartTime] = useState(new Date());
+  const [startTime, setStartTime] = useState("09:00");
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [endTime, setEndTime] = useState(new Date());
+  const [endTime, setEndTime] = useState("17:00");
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
@@ -51,19 +51,13 @@ export default function AdminCreateEventScreen({ route, navigation }) {
         setDate(new Date(year, month - 1, day));
       }
       
-      // Parse time strings to Date objects
+      // Parse time strings to time strings (already in HH:MM format)
       if (existingEvent.startTime) {
-        const [hours, minutes] = existingEvent.startTime.split(':').map(Number);
-        const timeDate = new Date();
-        timeDate.setHours(hours, minutes);
-        setStartTime(timeDate);
+        setStartTime(existingEvent.startTime);
       }
       
       if (existingEvent.endTime) {
-        const [hours, minutes] = existingEvent.endTime.split(':').map(Number);
-        const timeDate = new Date();
-        timeDate.setHours(hours, minutes);
-        setEndTime(timeDate);
+        setEndTime(existingEvent.endTime);
       }
       
       setLocation(existingEvent.location || "");
@@ -139,6 +133,26 @@ export default function AdminCreateEventScreen({ route, navigation }) {
     return dateObj.toLocaleDateString('da-DK', options);
   };
 
+  // Hjælpefunktion til at konvertere tid string (HH:MM) til Date objekt for picker
+  const getTimeAsDate = (timeStr) => {
+    const now = new Date();
+    
+    // Hvis der er en gyldig tid string, brug den
+    if (timeStr && timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':');
+      const h = parseInt(hours, 10);
+      const m = parseInt(minutes, 10);
+      
+      if (!isNaN(h) && !isNaN(m)) {
+        now.setHours(h, m, 0, 0);
+        return now;
+      }
+    }
+    
+    // Ellers returner bare nuværende tid
+    return now;
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
 
@@ -146,8 +160,8 @@ export default function AdminCreateEventScreen({ route, navigation }) {
       title: title.trim(),
       description: description.trim() || null,
       date: formatDate(date),
-      startTime: formatTime(startTime),
-      endTime: formatTime(endTime),
+      startTime: startTime, // Already a string
+      endTime: endTime, // Already a string
       location: location.trim() || null,
       assignedTo: selectedEmployees.map(e => ({ id: e.id, name: `${e.firstName} ${e.lastName}` })),
       createdAt: Date.now(),
@@ -174,8 +188,8 @@ export default function AdminCreateEventScreen({ route, navigation }) {
                 setTitle("");
                 setDescription("");
                 setDate(new Date());
-                setStartTime(new Date());
-                setEndTime(new Date());
+                setStartTime("09:00");
+                setEndTime("17:00");
                 setLocation("");
                 setSelectedEmployees([]);
               },
@@ -346,7 +360,7 @@ export default function AdminCreateEventScreen({ route, navigation }) {
                 <View style={globalStyles.dateTimeBtnContent}>
                   <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
                   <Text style={globalStyles.dateTimeBtnValue}>
-                    {formatTime(startTime)}
+                    {startTime}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -358,7 +372,7 @@ export default function AdminCreateEventScreen({ route, navigation }) {
                 <View style={globalStyles.dateTimeBtnContent}>
                   <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
                   <Text style={globalStyles.dateTimeBtnValue}>
-                    {formatTime(endTime)}
+                    {endTime}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -368,14 +382,19 @@ export default function AdminCreateEventScreen({ route, navigation }) {
             {showStartTimePicker && (
               <View style={globalStyles.modernPickerContainer}>
                 <DateTimePicker
-                  value={startTime}
+                  key={`start-${startTime}`}
+                  value={getTimeAsDate(startTime)}
                   mode="time"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  textColor="#000000"
+                  locale="da-DK"
                   onChange={(event, selectedTime) => {
                     if (Platform.OS === 'android') {
                       setShowStartTimePicker(false);
                     }
-                    if (selectedTime) setStartTime(selectedTime);
+                    if (selectedTime) {
+                      setStartTime(formatTime(selectedTime));
+                    }
                   }}
                 />
                 {Platform.OS === 'ios' && (
@@ -392,14 +411,19 @@ export default function AdminCreateEventScreen({ route, navigation }) {
             {showEndTimePicker && (
               <View style={globalStyles.modernPickerContainer}>
                 <DateTimePicker
-                  value={endTime}
+                  key={`end-${endTime}`}
+                  value={getTimeAsDate(endTime)}
                   mode="time"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  textColor="#000000"
+                  locale="da-DK"
                   onChange={(event, selectedTime) => {
                     if (Platform.OS === 'android') {
                       setShowEndTimePicker(false);
                     }
-                    if (selectedTime) setEndTime(selectedTime);
+                    if (selectedTime) {
+                      setEndTime(formatTime(selectedTime));
+                    }
                   }}
                 />
                 {Platform.OS === 'ios' && (
@@ -414,38 +438,7 @@ export default function AdminCreateEventScreen({ route, navigation }) {
             )}
           </View>
 
-          {/* Medarbejdere Section */}
-          <View style={globalStyles.eventSection}>
-            <Text style={globalStyles.eventSectionTitle}>Tildel medarbejdere</Text>
-            {employees.length === 0 ? (
-              <Text style={globalStyles.eventEmptyText}>Ingen godkendte medarbejdere</Text>
-            ) : (
-              <View style={globalStyles.eventEmployeeList}>
-                {employees.map(emp => {
-                  const selected = selectedEmployees.some(e => e.id === emp.id);
-                  return (
-                    <TouchableOpacity 
-                      key={emp.id} 
-                      onPress={() => toggleSelectEmployee(emp)} 
-                      style={[globalStyles.eventEmployeeItem, selected && globalStyles.eventEmployeeItemSelected]}
-                    >
-                      <View style={globalStyles.eventEmployeeInfo}>
-                        <View style={[globalStyles.eventAvatar, selected && globalStyles.eventAvatarSelected]}>
-                          <Text style={[globalStyles.eventAvatarText, selected && globalStyles.eventAvatarTextSelected]}>
-                            {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}
-                          </Text>
-                        </View>
-                        <Text style={[globalStyles.eventEmployeeName, selected && globalStyles.eventEmployeeNameSelected]}>
-                          {emp.firstName} {emp.lastName}
-                        </Text>
-                      </View>
-                      {selected && <Ionicons name="checkmark-circle" size={24} color="#007AFF" />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-          </View>
+
 
           {/* Udgifter Section */}
           {isEditing && (

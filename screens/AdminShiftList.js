@@ -230,6 +230,26 @@ export default function AdminShiftList({ route, navigation }) {
     }
   };
 
+  // Hjælpefunktion til at konvertere tid string (HH:MM) til Date objekt for picker
+  const getTimeAsDate = (timeStr) => {
+    const now = new Date();
+    
+    // Hvis der er en gyldig tid string, brug den
+    if (timeStr && timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':');
+      const h = parseInt(hours, 10);
+      const m = parseInt(minutes, 10);
+      
+      if (!isNaN(h) && !isNaN(m)) {
+        now.setHours(h, m, 0, 0);
+        return now;
+      }
+    }
+    
+    // Ellers returner bare nuværende tid
+    return now;
+  };
+
   // Toggle funktion til at tilføje/fjerne medarbejder fra vagt (bruges i medarbejder liste)
   const toggleEmployee = (employeeId, employeeName) => {
     const currentAssigned = formData.assignedTo || []; // Henter nuværende tildelte medarbejdere
@@ -404,7 +424,7 @@ export default function AdminShiftList({ route, navigation }) {
       setSearchText("");
     } catch (e) {
       // ERROR HANDLING: Viser fejlbesked hvis Firebase operation fejler
-      Alert.alert("Fejl: " + e.message);
+      Alert.alert("Fejl", e.message);
     }
   };
 
@@ -442,8 +462,8 @@ export default function AdminShiftList({ route, navigation }) {
     return (
       <SafeAreaView style={globalStyles.container}>
         <View style={[globalStyles.center, { marginTop: 50 }]}>
-          <ActivityIndicator /> {/* Spinner animation */}
-          <Text>Indlæser vagter…</Text>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={{ marginTop: 10 }}>Indlæser vagter…</Text>
         </View>
       </SafeAreaView>
     );
@@ -815,10 +835,13 @@ export default function AdminShiftList({ route, navigation }) {
               {showStartTimePicker && (
                 <View style={globalStyles.modernPickerContainer}>
                   <DateTimePicker
-                    value={formData.startTime ? new Date(`2000-01-01T${formData.startTime}:00`) : new Date()}
+                    key={`start-${formData.startTime}`}
+                    value={getTimeAsDate(formData.startTime)}
                     mode="time"
-                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={onStartTimeChange}
+                    textColor="#000000"
+                    locale="da-DK"
                   />
                   {Platform.OS === 'ios' && (
                     <TouchableOpacity
@@ -834,10 +857,13 @@ export default function AdminShiftList({ route, navigation }) {
               {showEndTimePicker && (
                 <View style={globalStyles.modernPickerContainer}>
                   <DateTimePicker
-                    value={formData.endTime ? new Date(`2000-01-01T${formData.endTime}:00`) : new Date()}
+                    key={`end-${formData.endTime}`}
+                    value={getTimeAsDate(formData.endTime)}
                     mode="time"
-                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={onEndTimeChange}
+                    textColor="#000000"
+                    locale="da-DK"
                   />
                   {Platform.OS === 'ios' && (
                     <TouchableOpacity
@@ -872,11 +898,18 @@ export default function AdminShiftList({ route, navigation }) {
                         globalStyles.assignBtn,
                         isSelected && globalStyles.assignBtnSelected
                       ]}
-                      onPress={() => setFormData({ 
-                        ...formData, 
-                        eventId: id, 
-                        eventTitle: event.title || '' 
-                      })}
+                      onPress={() => {
+                        // Auto-udfyld dato fra event
+                        const eventDate = event.date ? new Date(event.date + 'T12:00:00') : formData.date;
+                        setFormData({ 
+                          ...formData, 
+                          eventId: id, 
+                          eventTitle: event.title || '',
+                          date: eventDate,
+                          // Hvis multi-dag mode, nulstil valgte datoer
+                          selectedDates: formData.isMultipleDays ? [] : formData.selectedDates
+                        });
+                      }}
                     >
                       <View>
                         <Text style={[

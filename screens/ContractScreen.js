@@ -58,7 +58,7 @@ export default function ContractScreen({ route }) {
 
       <Text style={globalStyles.detailRow}>
         <Text style={globalStyles.detailLabel}>Virksomhed: </Text>
-        <Text style={globalStyles.detailValue}>{employee.companyName || "Virksomhed " + companyCode}</Text>
+        <Text style={globalStyles.detailValue}>{employee.companyName || `Virksomhed ${companyCode}`}</Text>
       </Text>
 
       <Text style={globalStyles.detailRow}>
