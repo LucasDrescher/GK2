@@ -91,7 +91,10 @@ function AdminDrawer({ route }) {
       <Drawer.Screen
         name="EditEvent"
         component={AdminCreateEventScreen}
-        options={{ title: "Rediger event" }}
+        options={{ 
+          title: "Rediger event",
+          drawerItemStyle: { display: 'none' }
+        }}
         initialParams={{ companyCode }}
       />
       <Drawer.Screen
