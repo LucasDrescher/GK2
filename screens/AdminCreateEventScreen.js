@@ -7,7 +7,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
 import { globalStyles } from "../styles";
 import { rtdb } from "../database/firebase";
 import { ref, push, update, remove, onValue } from "firebase/database";
@@ -21,9 +24,12 @@ export default function AdminCreateEventScreen({ route, navigation }) {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(""); // expected YYYY-MM-DD
-  const [startTime, setStartTime] = useState(""); // expected HH:MM
-  const [endTime, setEndTime] = useState(""); // expected HH:MM
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [startTime, setStartTime] = useState(new Date());
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [endTime, setEndTime] = useState(new Date());
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -38,11 +44,29 @@ export default function AdminCreateEventScreen({ route, navigation }) {
     if (existingEvent) {
       setTitle(existingEvent.title || "");
       setDescription(existingEvent.description || "");
-      setDate(existingEvent.date || "");
-      setStartTime(existingEvent.startTime || "");
-      setEndTime(existingEvent.endTime || "");
+      
+      // Parse date string to Date object
+      if (existingEvent.date) {
+        const [year, month, day] = existingEvent.date.split('-').map(Number);
+        setDate(new Date(year, month - 1, day));
+      }
+      
+      // Parse time strings to Date objects
+      if (existingEvent.startTime) {
+        const [hours, minutes] = existingEvent.startTime.split(':').map(Number);
+        const timeDate = new Date();
+        timeDate.setHours(hours, minutes);
+        setStartTime(timeDate);
+      }
+      
+      if (existingEvent.endTime) {
+        const [hours, minutes] = existingEvent.endTime.split(':').map(Number);
+        const timeDate = new Date();
+        timeDate.setHours(hours, minutes);
+        setEndTime(timeDate);
+      }
+      
       setLocation(existingEvent.location || "");
-      // prefilling assigned employees will be handled after employees are loaded
     }
   }, [existingEvent]);
 
@@ -94,11 +118,25 @@ export default function AdminCreateEventScreen({ route, navigation }) {
       Alert.alert("Validering", "Titel skal udfyldes.");
       return false;
     }
-    if (!date.trim()) {
-      Alert.alert("Validering", "Dato skal udfyldes (YYYY-MM-DD).");
-      return false;
-    }
     return true;
+  };
+
+  const formatDate = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTime = (dateObj) => {
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const formatDateDisplay = (dateObj) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return dateObj.toLocaleDateString('da-DK', options);
   };
 
   const handleSave = async () => {
@@ -107,9 +145,9 @@ export default function AdminCreateEventScreen({ route, navigation }) {
     const event = {
       title: title.trim(),
       description: description.trim() || null,
-      date: date.trim(),
-      startTime: startTime.trim() || null,
-      endTime: endTime.trim() || null,
+      date: formatDate(date),
+      startTime: formatTime(startTime),
+      endTime: formatTime(endTime),
       location: location.trim() || null,
       assignedTo: selectedEmployees.map(e => ({ id: e.id, name: `${e.firstName} ${e.lastName}` })),
       createdAt: Date.now(),
@@ -135,10 +173,11 @@ export default function AdminCreateEventScreen({ route, navigation }) {
                 // clear form for next input
                 setTitle("");
                 setDescription("");
-                setDate("");
-                setStartTime("");
-                setEndTime("");
+                setDate(new Date());
+                setStartTime(new Date());
+                setEndTime(new Date());
                 setLocation("");
+                setSelectedEmployees([]);
               },
             },
             { text: "Tilbage", onPress: () => navigation.goBack() },
@@ -211,120 +250,269 @@ export default function AdminCreateEventScreen({ route, navigation }) {
   };
 
   return (
-    <SafeAreaView style={globalStyles.container}>
-      <ScrollView>
-  <Text style={globalStyles.title}>{isEditing ? 'Rediger event' : 'Opret nyt event'}</Text>
+    <SafeAreaView style={globalStyles.eventScreenContainer}>
+      <ScrollView style={globalStyles.eventScrollView} showsVerticalScrollIndicator={false}>
+        <View style={globalStyles.eventContent}>
+          
+          {/* Titel Section */}
+          <View style={globalStyles.eventSection}>
+            <Text style={globalStyles.eventSectionTitle}>Event detaljer</Text>
+            
+            <View style={globalStyles.eventInputContainer}>
+              <Text style={globalStyles.eventLabel}>Titel</Text>
+              <TextInput
+                style={globalStyles.eventInput}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="F.eks. Årsfest 2025"
+                placeholderTextColor="#999"
+              />
+            </View>
 
-        <Text style={globalStyles.label}>Titel</Text>
-        <TextInput
-          style={globalStyles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Event titel"
-        />
+            <View style={globalStyles.eventInputContainer}>
+              <Text style={globalStyles.eventLabel}>Beskrivelse</Text>
+              <TextInput
+                style={[globalStyles.eventInput, globalStyles.eventTextArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Kort beskrivelse af eventet..."
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={4}
+              />
+            </View>
 
-        <Text style={globalStyles.label}>Beskrivelse (valgfri)</Text>
-        <TextInput
-          style={globalStyles.textarea}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Kort beskrivelse"
-          multiline
-        />
-
-        <Text style={globalStyles.label}>Dato (YYYY-MM-DD)</Text>
-        <TextInput
-          style={globalStyles.input}
-          value={date}
-          onChangeText={setDate}
-          placeholder="2025-12-31"
-        />
-
-        <View style={globalStyles.formRow}>
-          <View style={[globalStyles.col, { marginRight: 8 }]}> 
-            <Text style={globalStyles.label}>Start tid (HH:MM)</Text>
-            <TextInput
-              style={globalStyles.input}
-              value={startTime}
-              onChangeText={setStartTime}
-              placeholder="08:00"
-            />
+            <View style={globalStyles.eventInputContainer}>
+              <Text style={globalStyles.eventLabel}>Lokation</Text>
+              <TextInput
+                style={globalStyles.eventInput}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="F.eks. København"
+                placeholderTextColor="#999"
+              />
+            </View>
           </View>
-          <View style={globalStyles.col}>
-            <Text style={globalStyles.label}>Slut tid (HH:MM)</Text>
-            <TextInput
-              style={globalStyles.input}
-              value={endTime}
-              onChangeText={setEndTime}
-              placeholder="12:00"
-            />
-          </View>
-        </View>
 
-        <Text style={globalStyles.label}>Lokation (valgfri)</Text>
-        <TextInput
-          style={globalStyles.input}
-          value={location}
-          onChangeText={setLocation}
-          placeholder="F.eks. København"
-        />
-
-        <Text style={[globalStyles.subsectionTitle, { marginTop: 8 }]}>Tildel medarbejdere</Text>
-        {employees.length === 0 ? (
-          <Text style={globalStyles.noShiftsText}>Ingen godkendte medarbejdere</Text>
-        ) : (
-          employees.map(emp => {
-            const selected = selectedEmployees.some(e => e.id === emp.id);
-            return (
-              <TouchableOpacity key={emp.id} onPress={() => toggleSelectEmployee(emp)} style={[globalStyles.assignedEmployeeContainer, selected ? globalStyles.assignBtnSelected : {}]}>
-                <Text style={globalStyles.assignedEmployeeText}>{emp.firstName} {emp.lastName}</Text>
-                <Text style={selected ? globalStyles.assignTextSelected : globalStyles.assignText}>{selected ? 'Valgt' : 'Vælg'}</Text>
+          {/* Dato & Tid Section */}
+          <View style={globalStyles.eventSection}>
+            <Text style={globalStyles.eventSectionTitle}>Dato og tid</Text>
+            
+            {/* Dato vælger */}
+            <View style={globalStyles.dateTimeGroup}>
+              <TouchableOpacity
+                style={[globalStyles.modernDateTimeBtn, showDatePicker && globalStyles.modernDateTimeBtnActive]}
+                onPress={() => setShowDatePicker(!showDatePicker)}
+              >
+                <View style={globalStyles.dateTimeBtnContent}>
+                  <Text style={globalStyles.dateTimeBtnLabel}>Dato</Text>
+                  <Text style={globalStyles.dateTimeBtnValue}>
+                    {formatDateDisplay(date)}
+                  </Text>
+                </View>
               </TouchableOpacity>
-            );
-          })
-        )}
+              
+              {showDatePicker && (
+                <View style={globalStyles.modernPickerContainer}>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowDatePicker(false);
+                      }
+                      if (selectedDate) setDate(selectedDate);
+                    }}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={globalStyles.modernPickerDoneBtn}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
 
-        <Text style={[globalStyles.subsectionTitle, { marginTop: 12 }]}>Udgifter</Text>
-        {expenses.length === 0 ? (
-          <Text style={globalStyles.noShiftsText}>Ingen udgifter</Text>
-        ) : (
-          expenses.map(ex => (
-            <View key={ex.id} style={[globalStyles.shiftCard, { marginHorizontal: 0 }] }>
-              <View style={globalStyles.flex1}>
-                <Text style={globalStyles.shiftArea}>{ex.description}</Text>
-                <Text style={globalStyles.shiftContact}>{ex.amount} kr</Text>
-                {ex.receiptUrl ? <Text style={globalStyles.shiftEmployees}>Kvittering: {ex.receiptUrl}</Text> : null}
+            {/* Start og slut tid i samme række */}
+            <View style={globalStyles.timeRow}>
+              <TouchableOpacity
+                style={[globalStyles.modernDateTimeBtn, showStartTimePicker && globalStyles.modernDateTimeBtnActive]}
+                onPress={() => setShowStartTimePicker(!showStartTimePicker)}
+              >
+                <View style={globalStyles.dateTimeBtnContent}>
+                  <Text style={globalStyles.dateTimeBtnLabel}>Start</Text>
+                  <Text style={globalStyles.dateTimeBtnValue}>
+                    {formatTime(startTime)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[globalStyles.modernDateTimeBtn, showEndTimePicker && globalStyles.modernDateTimeBtnActive]}
+                onPress={() => setShowEndTimePicker(!showEndTimePicker)}
+              >
+                <View style={globalStyles.dateTimeBtnContent}>
+                  <Text style={globalStyles.dateTimeBtnLabel}>Slut</Text>
+                  <Text style={globalStyles.dateTimeBtnValue}>
+                    {formatTime(endTime)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Time pickers */}
+            {showStartTimePicker && (
+              <View style={globalStyles.modernPickerContainer}>
+                <DateTimePicker
+                  value={startTime}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  onChange={(event, selectedTime) => {
+                    if (Platform.OS === 'android') {
+                      setShowStartTimePicker(false);
+                    }
+                    if (selectedTime) setStartTime(selectedTime);
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={globalStyles.modernPickerDoneBtn}
+                    onPress={() => setShowStartTimePicker(false)}
+                  >
+                    <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+            
+            {showEndTimePicker && (
+              <View style={globalStyles.modernPickerContainer}>
+                <DateTimePicker
+                  value={endTime}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  onChange={(event, selectedTime) => {
+                    if (Platform.OS === 'android') {
+                      setShowEndTimePicker(false);
+                    }
+                    if (selectedTime) setEndTime(selectedTime);
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={globalStyles.modernPickerDoneBtn}
+                    onPress={() => setShowEndTimePicker(false)}
+                  >
+                    <Text style={globalStyles.modernPickerDoneBtnText}>Færdig</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* Medarbejdere Section */}
+          <View style={globalStyles.eventSection}>
+            <Text style={globalStyles.eventSectionTitle}>Tildel medarbejdere</Text>
+            {employees.length === 0 ? (
+              <Text style={globalStyles.eventEmptyText}>Ingen godkendte medarbejdere</Text>
+            ) : (
+              <View style={globalStyles.eventEmployeeList}>
+                {employees.map(emp => {
+                  const selected = selectedEmployees.some(e => e.id === emp.id);
+                  return (
+                    <TouchableOpacity 
+                      key={emp.id} 
+                      onPress={() => toggleSelectEmployee(emp)} 
+                      style={[globalStyles.eventEmployeeItem, selected && globalStyles.eventEmployeeItemSelected]}
+                    >
+                      <View style={globalStyles.eventEmployeeInfo}>
+                        <View style={[globalStyles.eventAvatar, selected && globalStyles.eventAvatarSelected]}>
+                          <Text style={[globalStyles.eventAvatarText, selected && globalStyles.eventAvatarTextSelected]}>
+                            {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}
+                          </Text>
+                        </View>
+                        <Text style={[globalStyles.eventEmployeeName, selected && globalStyles.eventEmployeeNameSelected]}>
+                          {emp.firstName} {emp.lastName}
+                        </Text>
+                      </View>
+                      {selected && <Ionicons name="checkmark-circle" size={24} color="#007AFF" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {/* Udgifter Section */}
+          {isEditing && (
+            <View style={globalStyles.eventSection}>
+              <Text style={globalStyles.eventSectionTitle}>Udgifter</Text>
+              {expenses.length === 0 ? (
+                <Text style={globalStyles.eventEmptyText}>Ingen udgifter tilføjet</Text>
+              ) : (
+                <View style={globalStyles.eventExpenseList}>
+                  {expenses.map(ex => (
+                    <View key={ex.id} style={globalStyles.eventExpenseItem}>
+                      <View style={globalStyles.eventExpenseIcon}>
+                        <Ionicons name="receipt-outline" size={20} color="#007AFF" />
+                      </View>
+                      <View style={globalStyles.eventExpenseDetails}>
+                        <Text style={globalStyles.eventExpenseDescription}>{ex.description}</Text>
+                        <Text style={globalStyles.eventExpenseAmount}>{ex.amount} kr</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={globalStyles.eventAddExpenseContainer}>
+                <TextInput 
+                  style={globalStyles.eventInput} 
+                  value={expenseDesc} 
+                  onChangeText={setExpenseDesc} 
+                  placeholder="Beskrivelse" 
+                  placeholderTextColor="#999"
+                />
+                <TextInput 
+                  style={globalStyles.eventInput} 
+                  value={expenseAmount} 
+                  onChangeText={setExpenseAmount} 
+                  placeholder="Beløb (f.eks. 125.50)" 
+                  placeholderTextColor="#999"
+                  keyboardType="numeric" 
+                />
+                <TouchableOpacity style={globalStyles.eventSecondaryButton} onPress={handleAddExpense}>
+                  <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+                  <Text style={globalStyles.eventSecondaryButtonText}>Tilføj udgift</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          ))
-        )}
+          )}
 
-        <Text style={[globalStyles.label, { marginTop: 8 }]}>Tilføj udgift</Text>
-        <TextInput style={globalStyles.input} value={expenseDesc} onChangeText={setExpenseDesc} placeholder="Beskrivelse" />
-        <TextInput style={globalStyles.input} value={expenseAmount} onChangeText={setExpenseAmount} placeholder="Beløb (f.eks. 125.50)" keyboardType="numeric" />
-        <TextInput style={globalStyles.input} value={expenseReceiptUrl} onChangeText={setExpenseReceiptUrl} placeholder="Kvittering URL (valgfri)" />
-        <View style={{ marginTop: 8 }}>
-          <TouchableOpacity style={globalStyles.formButton} onPress={handleAddExpense}>
-            <Text style={{ fontWeight: '600' }}>Tilføj udgift</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Action Buttons */}
+          <View style={globalStyles.eventActionButtons}>
+            <TouchableOpacity
+              style={[globalStyles.eventPrimaryButton, saving && globalStyles.eventButtonDisabled]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              <Text style={globalStyles.eventPrimaryButtonText}>
+                {saving ? 'Gemmer...' : (isEditing ? 'Opdater event' : 'Opret event')}
+              </Text>
+            </TouchableOpacity>
 
-        <View style={{ marginTop: 12 }}>
-          <TouchableOpacity
-            style={globalStyles.formButtonPrimary}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            <Text style={globalStyles.formButtonText}>{saving ? 'Gemmer...' : (isEditing ? 'Opdater event' : 'Opret event')}</Text>
-          </TouchableOpacity>
-
-          {isEditing ? (
-            <View style={{ marginTop: 10 }}>
-              <TouchableOpacity style={[globalStyles.formButton, { backgroundColor: '#fff' }]} onPress={handleDelete}>
-                <Text style={{ color: '#d9534f', fontWeight: '600' }}>Slet event</Text>
+            {isEditing && (
+              <TouchableOpacity style={globalStyles.eventDeleteButton} onPress={handleDelete}>
+                <Ionicons name="trash-outline" size={20} color="#ff3b30" />
+                <Text style={globalStyles.eventDeleteButtonText}>Slet event</Text>
               </TouchableOpacity>
-            </View>
-          ) : null}
+            )}
+          </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>

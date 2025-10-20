@@ -1,8 +1,9 @@
 import React from "react";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Screens
 import LoginScreen from "./screens/LoginScreen";
@@ -17,10 +18,12 @@ import AdminCreateEventScreen from "./screens/AdminCreateEventScreen";
 import AdminEventListScreen from "./screens/AdminEventListScreen";
 import CameraTest from "./screens/Camera";
 import ImageScreen from "./screens/Pictureview";
+import MoreMenuScreen from "./screens/MoreMenuScreen";
+import EmployeeMoreScreen from "./screens/EmployeeMoreScreen";
 
 
 const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
+const Tab = createBottomTabNavigator();
 
 //Logout screen
 function LogoutScreen() {
@@ -37,90 +40,110 @@ function LogoutScreen() {
   return <View />; // viser ikke noget
 }
 
-// Drawer til medarbejdere
-function EmployeeDrawer({ route }) {
+// Bottom tabs til medarbejdere
+function EmployeeTabs({ route }) {
   const { userId, companyCode } = route.params;
 
   return (
-    <Drawer.Navigator initialRouteName="Shifts" screenOptions={{ swipeEnabled: false }}>
-      <Drawer.Screen
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Shifts') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'Contract') {
+            iconName = focused ? 'document-text' : 'document-text-outline';
+          } else if (route.name === 'EmployeeMore') {
+            iconName = focused ? 'ellipsis-horizontal-circle' : 'ellipsis-horizontal-circle-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+      <Tab.Screen
         name="Shifts"
         component={ShiftListScreen}
-        options={{ title: "Vagtliste" }}
+        options={{ title: "Vagtplan", headerShown: true }}
         initialParams={{ userId, companyCode }}
       />
-      <Drawer.Screen
+      <Tab.Screen
         name="Contract"
         component={ContractScreen}
-        options={{ title: "Kontrakt" }}
+        options={{ title: "Kontrakt", headerShown: true }}
         initialParams={{ userId, companyCode }}
       />
-      <Drawer.Screen
-        name="Logout"
-        component={LogoutScreen}
-        options={{ title: "Log ud" }}
+      <Tab.Screen
+        name="EmployeeMore"
+        component={EmployeeMoreScreen}
+        options={{ title: "Mere", headerShown: false }}
       />
-    </Drawer.Navigator>
+    </Tab.Navigator>
   );
 }
 
-// Drawer til admin
-function AdminDrawer({ route }) {
+// Bottom tabs til admin
+function AdminTabs({ route }) {
   const { companyCode } = route.params;
 
   return (
-    <Drawer.Navigator initialRouteName="Admin" screenOptions={{ swipeEnabled: false }}>
-      <Drawer.Screen
-        name="Admin"
-        component={AdminScreen}
-        options={{ title: "Godkend medarbejdere" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="AdminDashboard"
-        component={AdminDashboardScreen}
-        options={{ title: "Dashboard" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="AdminCreateEvent"
-        component={AdminCreateEventScreen}
-        options={{ title: "Opret event" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="EditEvent"
-        component={AdminCreateEventScreen}
-        options={{ 
-          title: "Rediger event",
-          drawerItemStyle: { display: 'none' }
-        }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
-        name="AdminEventList"
-        component={AdminEventListScreen}
-        options={{ title: "Events" }}
-        initialParams={{ companyCode }}
-      />
-      <Drawer.Screen
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'AdminShiftList') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'Admin') {
+            iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
+          } else if (route.name === 'AdminCreateEvent') {
+            iconName = focused ? 'add-circle' : 'add-circle-outline';
+          } else if (route.name === 'AdminEventList') {
+            iconName = focused ? 'list' : 'list-outline';
+          } else if (route.name === 'MoreMenu') {
+            iconName = focused ? 'ellipsis-horizontal-circle' : 'ellipsis-horizontal-circle-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+      <Tab.Screen
         name="AdminShiftList"
         component={AdminShiftList}
-        options={{ title: "Vagtplan" }}
+        options={{ title: "Vagtplan", headerShown: true }}
         initialParams={{ companyCode }}
       />
-      <Drawer.Screen
-        name="EmployeeManagement"
-        component={EmployeeManagementScreen}
-        options={{ title: "Overblik over medarbejdere" }}
+      <Tab.Screen
+        name="Admin"
+        component={AdminScreen}
+        options={{ title: "Godkend", headerShown: true }}
         initialParams={{ companyCode }}
       />
-      <Drawer.Screen
-        name="Logout"
-        component={LogoutScreen}
-        options={{ title: "Log ud" }}
+      <Tab.Screen
+        name="AdminCreateEvent"
+        component={AdminCreateEventScreen}
+        options={{ title: "Opret event", headerShown: true }}
+        initialParams={{ companyCode }}
       />
-    </Drawer.Navigator>
+      <Tab.Screen
+        name="AdminEventList"
+        component={AdminEventListScreen}
+        options={{ title: "Events", headerShown: true }}
+        initialParams={{ companyCode }}
+      />
+      <Tab.Screen
+        name="MoreMenu"
+        component={MoreMenuScreen}
+        options={{ title: "Mere", headerShown: false }}
+        initialParams={{ companyCode }}
+      />
+    </Tab.Navigator>
   );
 }
 
@@ -129,12 +152,16 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-  <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
-  <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Kamera" }} />
-  <Stack.Screen name="Image" component={ImageScreen} options={{ title: "Billede" }} />
-  <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
-        <Stack.Screen name="EmployeeHome" component={EmployeeDrawer} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminHome" component={AdminDrawer} options={{ headerShown: false }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Opret bruger" }} />
+        <Stack.Screen name="Camera" component={CameraTest} options={{ title: "Kamera" }} />
+        <Stack.Screen name="Image" component={ImageScreen} options={{ title: "Billede" }} />
+        <Stack.Screen name="AdminRegisterScreen" component={require("./screens/AdminRegisterScreen").default} options={{ title: "Opret virksomhed & admin" }} />
+        <Stack.Screen name="EmployeeHome" component={EmployeeTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="AdminHome" component={AdminTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: "Dashboard" }} />
+        <Stack.Screen name="EmployeeManagement" component={EmployeeManagementScreen} options={{ title: "Overblik over medarbejdere" }} />
+        <Stack.Screen name="EditEvent" component={AdminCreateEventScreen} options={{ title: "Rediger event" }} />
+        <Stack.Screen name="Logout" component={LogoutScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

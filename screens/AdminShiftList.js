@@ -29,6 +29,7 @@ export default function AdminShiftList({ route, navigation }) {
   // State hooks til at håndtere komponentens tilstand
   const [shifts, setShifts] = useState(null); // Alle vagter fra databasen
   const [employees, setEmployees] = useState({}); // Godkendte medarbejdere
+  const [events, setEvents] = useState({}); // Events fra databasen
   const [modalVisible, setModalVisible] = useState(false); // Styrer om modal er åben
   const [editingId, setEditingId] = useState(null); // ID på vagt der redigeres (null = ny vagt)
   
@@ -42,6 +43,8 @@ export default function AdminShiftList({ route, navigation }) {
     date: new Date(),
     selectedDates: [], // Array til at holde flere valgte datoer
     isMultipleDays: false, // Boolean til at skifte mellem enkelt/flere dage
+    eventId: null, // ID på det tilknyttede event (valgfrit)
+    eventTitle: "", // Titel på det tilknyttede event (til visning)
   });
   
   // State til søgefunktionalitet og UI kontrol
@@ -89,10 +92,18 @@ export default function AdminShiftList({ route, navigation }) {
       setEmployees(approvedEmployees);
     });
 
+    // Opretter reference til events i Firebase
+    const eventsRef = ref(rtdb, `companies/${companyCode}/events`);
+    const unsubEvents = onValue(eventsRef, (snap) => {
+      const data = snap.val();
+      setEvents(data || {});
+    });
+
     // Cleanup funktion - fjerner listeners når komponenten unmountes
     return () => {
       unsubscribe();
       unsubEmp();
+      unsubEvents();
     };
   }, [companyCode]); // Dependency array - kør igen hvis companyCode ændres
 
@@ -285,6 +296,8 @@ export default function AdminShiftList({ route, navigation }) {
         // Normaliserer assignedTo til array format uanset hvad der er gemt
         assignedTo: Array.isArray(shiftData.assignedTo) ? shiftData.assignedTo : 
                    shiftData.assignedTo ? [{ name: shiftData.assignedTo }] : [],
+        eventId: shiftData.eventId || null,
+        eventTitle: shiftData.eventTitle || "",
       });
     } else {
       // OPRETTELSE MODE: Sætter standard værdier for ny vagt
@@ -303,6 +316,8 @@ export default function AdminShiftList({ route, navigation }) {
         date: initialDate,
         selectedDates: [],
         isMultipleDays: false,
+        eventId: null,
+        eventTitle: "",
       });
     }
     
@@ -323,6 +338,11 @@ export default function AdminShiftList({ route, navigation }) {
       return Alert.alert("Udfyld alle felter!"); // Stopper udførelse hvis felter mangler
     }
 
+    // VALIDERING: Tjekker at et event er valgt
+    if (!formData.eventId) {
+      return Alert.alert("Vælg et event!", "Du skal vælge et event for at oprette en vagt.");
+    }
+
     // VALIDERING: Tjekker at mindst én dato er valgt i multi-dag mode
     if (formData.isMultipleDays && formData.selectedDates.length === 0) {
       return Alert.alert("Vælg mindst én dato!");
@@ -338,6 +358,8 @@ export default function AdminShiftList({ route, navigation }) {
           endTime: formData.endTime,
           assignedTo: formData.assignedTo,
           date: formatDate(formData.date), // Konverterer Date til string
+          eventId: formData.eventId || null,
+          eventTitle: formData.eventTitle || null,
         };
         // Opdaterer specifik vagt i Firebase
         await update(ref(rtdb, `companies/${companyCode}/shifts/${editingId}`), shiftData);
@@ -354,6 +376,8 @@ export default function AdminShiftList({ route, navigation }) {
               endTime: formData.endTime,
               assignedTo: formData.assignedTo,
               date: dateStr, // Bruger dato string direkte
+              eventId: formData.eventId || null,
+              eventTitle: formData.eventTitle || null,
             };
             // Returnerer promise for Firebase push operation
             return push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
@@ -367,6 +391,8 @@ export default function AdminShiftList({ route, navigation }) {
           const shiftData = {
             ...formData, // Spreder alle form data
             date: formatDate(formData.date), // Konverterer Date til string
+            eventId: formData.eventId || null,
+            eventTitle: formData.eventTitle || null,
           };
           await push(ref(rtdb, `companies/${companyCode}/shifts`), shiftData);
           Alert.alert("Ny vagt oprettet");
@@ -464,6 +490,11 @@ export default function AdminShiftList({ route, navigation }) {
                 <Text style={globalStyles.shiftContact}>
                   Kontakt: {shift.contactPerson}
                 </Text>
+                {shift.eventTitle && (
+                  <Text style={[globalStyles.shiftContact, { color: '#2196F3', fontWeight: '600' }]}>
+                    🎉 Event: {shift.eventTitle}
+                  </Text>
+                )}
                 <Text style={globalStyles.shiftEmployees}>
                   Medarbejdere: {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
                     ? shift.assignedTo.map(emp => emp.name || emp).join(", ")
@@ -548,6 +579,11 @@ export default function AdminShiftList({ route, navigation }) {
                       {shift.startTime}–{shift.endTime}
                     </Text>
                     <Text style={globalStyles.weekShiftArea}>{shift.area}</Text>
+                    {shift.eventTitle && (
+                      <Text style={[globalStyles.weekShiftEmployees, { color: '#2196F3', fontWeight: '600' }]}>
+                        🎉 {shift.eventTitle}
+                      </Text>
+                    )}
                     <Text style={globalStyles.weekShiftEmployees}>
                       {Array.isArray(shift.assignedTo) && shift.assignedTo.length > 0
                         ? `${shift.assignedTo.length} medarbejdere`
@@ -814,6 +850,55 @@ export default function AdminShiftList({ route, navigation }) {
                 </View>
               )}
             </View>
+
+            {/* Event sektion */}
+            <Text style={globalStyles.sectionTitle}>Vælg event (påkrævet)</Text>
+            
+            {Object.keys(events).length === 0 ? (
+              <Text style={{ textAlign: "center", marginVertical: 16, color: "#FF3B30", fontSize: 14, fontWeight: '600' }}>
+                ⚠️ Ingen events oprettet endnu - du skal oprette et event først!
+              </Text>
+            ) : (
+              <View style={{ marginBottom: 16 }}>
+                {Object.entries(events).map(([id, event]) => {
+                  const isSelected = formData.eventId === id;
+                  const eventDate = event.date ? new Date(event.date + 'T00:00:00') : null;
+                  const eventDateStr = eventDate ? formatDateDisplay(eventDate) : '';
+                  
+                  return (
+                    <TouchableOpacity
+                      key={id}
+                      style={[
+                        globalStyles.assignBtn,
+                        isSelected && globalStyles.assignBtnSelected
+                      ]}
+                      onPress={() => setFormData({ 
+                        ...formData, 
+                        eventId: id, 
+                        eventTitle: event.title || '' 
+                      })}
+                    >
+                      <View>
+                        <Text style={[
+                          globalStyles.assignText,
+                          isSelected && globalStyles.assignTextSelected
+                        ]}>
+                          {isSelected ? "✓ " : ""}{event.title}
+                        </Text>
+                        <Text style={[globalStyles.assignText, { fontSize: 12, color: "#666" }]}>
+                          {eventDateStr} • {event.startTime || ''} - {event.endTime || ''}
+                        </Text>
+                        {event.location && (
+                          <Text style={[globalStyles.assignText, { fontSize: 12, color: "#666" }]}>
+                            📍 {event.location}
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
 
             <Text style={globalStyles.sectionTitle}>Tilknyt medarbejdere</Text>
             
