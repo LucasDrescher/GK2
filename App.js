@@ -12,8 +12,12 @@ import ContractScreen from "./screens/ContractScreen";
 import AdminScreen from "./screens/AdminScreen";
 import EmployeeManagementScreen from "./screens/EmployeeManagementScreen";
 import AdminShiftList from "./screens/AdminShiftList";
+import AdminDashboardScreen from "./screens/AdminDashboardScreen";
+import AdminCreateEventScreen from "./screens/AdminCreateEventScreen";
+import AdminEventListScreen from "./screens/AdminEventListScreen";
 import CameraTest from "./screens/Camera";
 import ImageScreen from "./screens/Pictureview";
+
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -70,6 +74,24 @@ function AdminDrawer({ route }) {
         name="Admin"
         component={AdminScreen}
         options={{ title: "Godkend medarbejdere" }}
+        initialParams={{ companyCode }}
+      />
+      <Drawer.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={{ title: "Dashboard" }}
+        initialParams={{ companyCode }}
+      />
+      <Drawer.Screen
+        name="AdminCreateEvent"
+        component={AdminCreateEventScreen}
+        options={{ title: "Opret event" }}
+        initialParams={{ companyCode }}
+      />
+      <Drawer.Screen
+        name="AdminEventList"
+        component={AdminEventListScreen}
+        options={{ title: "Events" }}
         initialParams={{ companyCode }}
       />
       <Drawer.Screen

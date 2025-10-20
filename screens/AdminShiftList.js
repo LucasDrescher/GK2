@@ -433,7 +433,7 @@ export default function AdminShiftList({ route, navigation }) {
     const todayShifts = getShiftsForDate(today); // Finder alle vagter for i dag
 
     return (
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={globalStyles.flex1}>
         {/* Header med dagens dato */}
         <View style={globalStyles.dayHeader}>
           <Text style={globalStyles.dayHeaderText}>
@@ -443,7 +443,7 @@ export default function AdminShiftList({ route, navigation }) {
 
         {todayShifts.length === 0 ? (
           <View style={[globalStyles.center, { marginTop: 50 }]}>
-            <Text style={{ textAlign: "center", color: "#666" }}>
+            <Text style={globalStyles.centerTextMuted}>
               Ingen vagter i dag
             </Text>
           </View>
@@ -480,7 +480,7 @@ export default function AdminShiftList({ route, navigation }) {
   // RENDER FUNKTION: Viser vagter organiseret efter ugedage
   const renderWeekView = () => {
     return (
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={globalStyles.flex1}>
         {/* Navigation til at skifte mellem uger */}
         <View style={globalStyles.weekNavigation}>
           {/* Forrige uge knap */}
@@ -567,8 +567,8 @@ export default function AdminShiftList({ route, navigation }) {
     <SafeAreaView style={globalStyles.container}>
       <View style={globalStyles.header}>
         <Text style={globalStyles.headerText}>Vagtplan</Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={globalStyles.toggleContainer}>
+      <View style={globalStyles.rowGap8}>
+        <View style={globalStyles.toggleContainer}>
             <TouchableOpacity
               style={[
                 globalStyles.toggleBtn,
@@ -609,7 +609,7 @@ export default function AdminShiftList({ route, navigation }) {
 
       {/* Søgefelt kun for listevisning */}
       {viewMode === 'list' && ids.length > 0 && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        <View style={globalStyles.paddingH16T16}>
           <TextInput
             style={globalStyles.shiftInput}
             placeholder="Søg vagter efter medarbejdernavn..."
@@ -622,7 +622,7 @@ export default function AdminShiftList({ route, navigation }) {
 
       {ids.length === 0 ? (
         <View style={[globalStyles.center, { marginTop: 50 }]}>
-          <Text style={{ textAlign: "center" }}>Ingen vagter oprettet endnu</Text>
+          <Text style={globalStyles.centerTextMuted}>Ingen vagter oprettet endnu</Text>
         </View>
       ) : (
         viewMode === 'list' ? renderDayView() : renderWeekView()
@@ -708,21 +708,12 @@ export default function AdminShiftList({ route, navigation }) {
                     </TouchableOpacity>
                     
                     {/* Vis valgte datoer */}
-                    {formData.selectedDates.length > 0 && (
-                      <View style={{ marginTop: 10 }}>
+                        {formData.selectedDates.length > 0 && (
+                      <View style={globalStyles.marginTop24}>
                         <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Valgte datoer:</Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        <View style={globalStyles.chipRow}>
                           {formData.selectedDates.map((dateStr, index) => (
-                            <View key={index} style={{
-                              backgroundColor: '#e7f3ff',
-                              paddingHorizontal: 12,
-                              paddingVertical: 6,
-                              borderRadius: 16,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              borderWidth: 1,
-                              borderColor: '#2196F3'
-                            }}>
+                            <View key={index} style={globalStyles.weekShiftCard}>
                               <Text style={{ fontSize: 12, color: '#2196F3', marginRight: 6 }}>
                                 {formatDateDisplay(new Date(dateStr + 'T00:00:00'))}
                               </Text>
@@ -893,9 +884,9 @@ export default function AdminShiftList({ route, navigation }) {
               })
             )}
 
-            <View style={{ marginTop: 24 }}>
+            <View style={globalStyles.marginTop24}>
               <Button title="Gem" onPress={saveShift} color="#007AFF" />
-              <View style={{ height: 12 }} />
+              <View style={globalStyles.smallHeight12} />
               {editingId && (
                 <>
                   <Button 
@@ -906,7 +897,7 @@ export default function AdminShiftList({ route, navigation }) {
                     }} 
                     color="#FF3B30" 
                   />
-                  <View style={{ height: 12 }} />
+                  <View style={globalStyles.smallHeight12} />
                 </>
               )}
               <Button title="Annuller" onPress={() => {

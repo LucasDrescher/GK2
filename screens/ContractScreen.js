@@ -56,34 +56,33 @@ export default function ContractScreen({ route }) {
     <ScrollView contentContainerStyle={globalStyles.container}>
       <Text style={globalStyles.title}>Ansættelseskontrakt</Text>
 
-      <Text style={{ marginVertical: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>Virksomhed: </Text>
-        {employee.companyName || "Virksomhed " + companyCode}
+      <Text style={globalStyles.detailRow}>
+        <Text style={globalStyles.detailLabel}>Virksomhed: </Text>
+        <Text style={globalStyles.detailValue}>{employee.companyName || "Virksomhed " + companyCode}</Text>
       </Text>
 
-      <Text style={{ marginVertical: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>Navn: </Text>
-        {employee.firstName} {employee.lastName}
+      <Text style={globalStyles.detailRow}>
+        <Text style={globalStyles.detailLabel}>Navn: </Text>
+        <Text style={globalStyles.detailValue}>{employee.firstName} {employee.lastName}</Text>
       </Text>
 
-      <Text style={{ marginVertical: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>Fødselsdag: </Text>
-        {employee.birthday}
+      <Text style={globalStyles.detailRow}>
+        <Text style={globalStyles.detailLabel}>Fødselsdag: </Text>
+        <Text style={globalStyles.detailValue}>{employee.birthday}</Text>
       </Text>
 
-      <Text style={{ marginVertical: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>Adresse: </Text>
-        {employee.address}, {employee.country}
+      <Text style={globalStyles.detailRow}>
+        <Text style={globalStyles.detailLabel}>Adresse: </Text>
+        <Text style={globalStyles.detailValue}>{employee.address}, {employee.country}</Text>
       </Text>
 
-      <Text style={{ marginVertical: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>Email: </Text>
-        {employee.email}
+      <Text style={globalStyles.detailRow}>
+        <Text style={globalStyles.detailLabel}>Email: </Text>
+        <Text style={globalStyles.detailValue}>{employee.email}</Text>
       </Text>
 
       <Text style={{ marginVertical: 20, lineHeight: 22 }}>
-        Denne kontrakt bekræfter ansættelse hos{" "}
-        {employee.companyName || "virksomheden"} med ovenstående oplysninger.
+        Denne kontrakt bekræfter ansættelse hos {employee.companyName || "virksomheden"} med ovenstående oplysninger.
         Ved at underskrive accepterer medarbejderen gældende regler og vilkår.
       </Text>
 

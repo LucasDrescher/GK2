@@ -19,6 +19,11 @@ const { width, height } = Dimensions.get("window");
 export default function AdminDashboardScreen({ route, navigation }) {
   const { companyCode } = route.params;
 
+  // Debug: print incoming params and initial state to help diagnose missing UI
+  React.useEffect(() => {
+    console.log('AdminDashboard mounted - companyCode:', companyCode);
+  }, [companyCode]);
+
   // State management
   const [shifts, setShifts] = useState({});
   const [employees, setEmployees] = useState({});

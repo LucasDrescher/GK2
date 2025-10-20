@@ -58,7 +58,7 @@ export default function AdminEventListScreen({ route, navigation }) {
       onPress={() => navigation.navigate('EditEvent', { companyCode, event: item, eventId: item.id })}
       onLongPress={() => confirmDelete(item)}
     >
-      <View style={{ flex: 1 }}>
+      <View style={globalStyles.flex1}>
         <Text style={globalStyles.shiftArea}>{item.title}</Text>
         <Text style={globalStyles.shiftContact}>{item.date || 'Dato ukendt'}</Text>
         {item.location ? <Text style={globalStyles.shiftEmployees}>{item.location}</Text> : null}

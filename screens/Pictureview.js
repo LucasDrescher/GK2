@@ -7,9 +7,9 @@ export default function ImageScreen({ route }) {
   return (
     <View style={globalStyles.container}>
       {image ? (
-        <Image source={{ uri: image }} style={{ width: '100%', height: 400, resizeMode: 'contain' }} />
+  <Image source={{ uri: image }} style={globalStyles.imageFullContain} />
       ) : (
-        <Text style={{ color: '#333' }}>Ingen billede valgt</Text>
+  <Text style={globalStyles.textMuted}>Ingen billede valgt</Text>
       )}
     </View>
   );

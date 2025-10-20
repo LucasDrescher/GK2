@@ -84,7 +84,7 @@ export default function RegisterScreen({ navigation, route }) {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <SafeAreaView style={globalStyles.safeAreaWhite}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAwareScrollView
             contentContainerStyle={[globalStyles.container, { paddingBottom: 100 }]}
@@ -141,9 +141,9 @@ export default function RegisterScreen({ navigation, route }) {
                   visible={showDatePicker}
                   onRequestClose={() => setShowDatePicker(false)}
                 >
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' }}>
-                    <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '90%', maxWidth: 400, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
-                      <View style={{ height: 240, width: '100%', justifyContent: 'center' }}>
+                  <View style={globalStyles.modalBackdrop}>
+                      <View style={globalStyles.modalCard}>
+                        <View style={globalStyles.modalPickerContainer}>
                         <DateTimePicker
                           value={birthday && birthday.match(/^\d{4}-\d{2}-\d{2}$/)
                             ? new Date(birthday)
@@ -161,7 +161,7 @@ export default function RegisterScreen({ navigation, route }) {
                             }
                           }}
                           maximumDate={new Date()}
-                          style={{ width: '100%' }}
+                          style={globalStyles.fullWidth}
                         />
                       </View>
                       <Button title="OK" onPress={() => setShowDatePicker(false)} />
@@ -202,7 +202,7 @@ export default function RegisterScreen({ navigation, route }) {
             <Text>Land:</Text>
             <Pressable onPress={() => setShowCountryPicker(true)}>
               <View style={[globalStyles.input, { paddingVertical: 14 }]}> 
-                <Text style={{ color: country ? '#000' : '#888' }}>
+                <Text style={country ? globalStyles.countryTextDark : globalStyles.countryTextLight}>
                   {country ? country : 'Vælg land'}
                 </Text>
               </View>
@@ -259,8 +259,8 @@ export default function RegisterScreen({ navigation, route }) {
             />
 
             <Text>Pas:</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ flex: 1 }}>
+            <View style={globalStyles.rowGap8}>
+              <View style={globalStyles.flex1}>
                 <Button
                   title={passportUri ? 'Ret pas' : 'Upload pas'}
                   onPress={() => navigation.navigate('Camera', { targetField: 'passportUri' })}
@@ -268,7 +268,7 @@ export default function RegisterScreen({ navigation, route }) {
               </View>
               {passportUri ? (
                 <TouchableOpacity onPress={() => navigation.navigate('Image', { image: passportUri })}>
-                  <Image source={{ uri: passportUri }} style={{ width: 64, height: 44, borderRadius: 6 }} />
+                  <Image source={{ uri: passportUri }} style={globalStyles.passportThumb} />
                 </TouchableOpacity>
               ) : null}
             </View>

@@ -276,9 +276,9 @@ export default function AdminCreateEventScreen({ route, navigation }) {
           employees.map(emp => {
             const selected = selectedEmployees.some(e => e.id === emp.id);
             return (
-              <TouchableOpacity key={emp.id} onPress={() => toggleSelectEmployee(emp)} style={[globalStyles.assignedEmployeeContainer, { backgroundColor: selected ? '#e7f3ff' : '#fff' }]}>
+              <TouchableOpacity key={emp.id} onPress={() => toggleSelectEmployee(emp)} style={[globalStyles.assignedEmployeeContainer, selected ? globalStyles.assignBtnSelected : {}]}>
                 <Text style={globalStyles.assignedEmployeeText}>{emp.firstName} {emp.lastName}</Text>
-                <Text style={{ color: selected ? '#007AFF' : '#666' }}>{selected ? 'Valgt' : 'Vælg'}</Text>
+                <Text style={selected ? globalStyles.assignTextSelected : globalStyles.assignText}>{selected ? 'Valgt' : 'Vælg'}</Text>
               </TouchableOpacity>
             );
           })
@@ -290,7 +290,7 @@ export default function AdminCreateEventScreen({ route, navigation }) {
         ) : (
           expenses.map(ex => (
             <View key={ex.id} style={[globalStyles.shiftCard, { marginHorizontal: 0 }] }>
-              <View style={{ flex: 1 }}>
+              <View style={globalStyles.flex1}>
                 <Text style={globalStyles.shiftArea}>{ex.description}</Text>
                 <Text style={globalStyles.shiftContact}>{ex.amount} kr</Text>
                 {ex.receiptUrl ? <Text style={globalStyles.shiftEmployees}>Kvittering: {ex.receiptUrl}</Text> : null}

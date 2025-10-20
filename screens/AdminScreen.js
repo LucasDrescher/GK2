@@ -49,16 +49,8 @@ export default function AdminScreen({ route }) {
           data={pendingEmployees}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View
-              style={{
-                marginBottom: 20,
-                padding: 15,
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 10,
-              }}
-            >
-              <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+            <View style={globalStyles.employeeCard}>
+              <Text style={[globalStyles.employeeName, { marginBottom: 5 }]}>
                 {item.firstName} {item.lastName}
               </Text>
               <Text>Fødselsdag: {item.birthday}</Text>
@@ -68,7 +60,6 @@ export default function AdminScreen({ route }) {
               <Text>Virksomhedskode: {item.companyCode}</Text>
               <Text>Virksomhed: {item.companyName}</Text>
               <Text>Rolle: {item.role}</Text>
-
               <View style={{ marginTop: 10, flexDirection: "row", justifyContent: "space-between" }}>
                 <View style={{ flex: 1, marginRight: 5 }}>
                   <Button

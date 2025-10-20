@@ -48,7 +48,7 @@ export default function CameraTest({ navigation, route }) {
   function zoomOut() { setZoom((prev) => (prev - 0.1 >= 0 ? prev - 0.1 : 0)); }
 
   const CameraGallery = () => (
-    <View style={{ padding: 10 }}>
+    <View style={globalStyles.smallPadding}>
       <Text style={globalStyles.itemText}>Billeder taget: {imagesArr.length}</Text>
       <ScrollView horizontal>
         {imagesArr.length > 0 ? (
@@ -70,12 +70,12 @@ export default function CameraTest({ navigation, route }) {
   if (!permission) return <View />;
   if (!permission.granted) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ marginBottom: 20, fontSize: 16 }}>
+      <View style={globalStyles.centerAligned}>
+        <Text style={globalStyles.permissionText}>
           We need your permission to show the camera
         </Text>
         <TouchableOpacity onPress={requestPermission}>
-          <Text style={{ color: 'blue' }}>Grant Permission</Text>
+          <Text style={globalStyles.blueLink}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -83,38 +83,38 @@ export default function CameraTest({ navigation, route }) {
 
   return (
     <SafeAreaView style={[globalStyles.container, { padding: 0 }]}> 
-      <View style={{ flex: 1, position: 'relative', backgroundColor: 'black' }}>
+      <View style={globalStyles.cameraWrapper}>
         <CameraView
           ref={cameraRef}
-          style={{ flex: 1, width: '100%' }}
+          style={globalStyles.cameraView}
           facing={facing}
           zoom={zoom}
         />
 
         {/* Overlay controls (absolutely positioned so CameraView has no children) */}
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }} pointerEvents="box-none">
+        <View style={globalStyles.overlayAbsolute} pointerEvents="box-none">
           {/* Top row - gallery toggle */}
-          <View style={{ alignItems: 'flex-end', padding: 16 }} pointerEvents="auto">
-            <TouchableOpacity onPress={toggleGallery} style={{ padding: 8 }}>
+          <View style={globalStyles.topRightPadding16} pointerEvents="auto">
+            <TouchableOpacity onPress={toggleGallery} style={globalStyles.smallPadding}>
               <Ionicons name="images-outline" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
 
           {/* Bottom controls */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: 20 }} pointerEvents="auto">
-            <TouchableOpacity onPress={toggleFacing} style={{ padding: 12 }}>
+          <View style={globalStyles.controlRow} pointerEvents="auto">
+            <TouchableOpacity onPress={toggleFacing} style={globalStyles.smallPadding}>
               <Ionicons name="camera-reverse-outline" size={34} color="#fff" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={snap} style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' }} />
+            <TouchableOpacity onPress={snap} style={globalStyles.snapButtonOuter}>
+              <View style={globalStyles.snapButtonInner} />
             </TouchableOpacity>
 
-            <View style={{ alignItems: 'center' }}>
-              <TouchableOpacity onPress={zoomIn} style={{ padding: 8 }}>
+            <View style={globalStyles.zoomControls}>
+              <TouchableOpacity onPress={zoomIn} style={globalStyles.smallPadding}>
                 <Ionicons name="add-outline" size={30} color="#fff" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={zoomOut} style={{ padding: 8 }}>
+              <TouchableOpacity onPress={zoomOut} style={globalStyles.smallPadding}>
                 <Ionicons name="remove-outline" size={30} color="#fff" />
               </TouchableOpacity>
             </View>
